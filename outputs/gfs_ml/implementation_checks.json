@@ -1,0 +1,17 @@
+{
+  "tests": {
+    "command": ".venv/bin/python -m unittest discover -s tests -q",
+    "passed": 81,
+    "seconds": 9.94
+  },
+  "javascript_syntax": {
+    "command": "node --check web/app.js",
+    "exit_code": 0
+  },
+  "real_model_evaluation_complete": true,
+  "notes": [
+    "81 tests include synthetic fixtures; real December and January results are independently verified in independent_verification.json.",
+    "Default activation was withheld after January regression; the December algorithm selection remains unchanged.",
+    "CSV bytes, weather fingerprints and model version are checked together before month download."
+  ]
+}

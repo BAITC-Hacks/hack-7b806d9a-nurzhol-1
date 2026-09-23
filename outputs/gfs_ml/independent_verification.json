@@ -1,0 +1,32 @@
+{
+  "verified_at_utc": "2026-09-23T10:42:19.719373+00:00",
+  "phases": {
+    "december": {
+      "cases_per_turbine": {
+        "1": 1480,
+        "2": 1468
+      },
+      "all_candidate_case_sets_equal": true,
+      "labels_match_hourly_csv": true,
+      "metrics_recomputed": true,
+      "saved_predictions_reproduced": true,
+      "training_labels_available_before_first_issue": true,
+      "no_training_target_overlap": true
+    },
+    "january_descriptive": {
+      "cases_per_turbine": {
+        "1": 1464,
+        "2": 1464
+      },
+      "all_candidate_case_sets_equal": true,
+      "labels_match_hourly_csv": true,
+      "metrics_recomputed": true,
+      "saved_predictions_reproduced": true,
+      "training_labels_available_before_first_issue": true,
+      "no_training_target_overlap": true
+    }
+  },
+  "selected_candidate": "affine_wind",
+  "deployment_version": "gfs-ml-v1:30e504d3fa915c28313a72a3c8f0d5412a78763b1207789a749d094d1a620668",
+  "january_regression": true
+}

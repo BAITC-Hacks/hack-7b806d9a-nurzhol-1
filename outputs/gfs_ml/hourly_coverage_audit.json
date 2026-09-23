@@ -1,0 +1,44 @@
+{
+  "november_fit": {
+    "1": {
+      "hourly_rows": 672,
+      "complete_hours": 672,
+      "incomplete_hours": 0,
+      "last_complete_label": "2025-11-28T23:00:00"
+    },
+    "2": {
+      "hourly_rows": 672,
+      "complete_hours": 672,
+      "incomplete_hours": 0,
+      "last_complete_label": "2025-11-28T23:00:00"
+    }
+  },
+  "december_selection": {
+    "1": {
+      "hourly_rows": 744,
+      "complete_hours": 740,
+      "incomplete_hours": 4,
+      "last_complete_label": "2025-12-31T23:00:00"
+    },
+    "2": {
+      "hourly_rows": 744,
+      "complete_hours": 734,
+      "incomplete_hours": 10,
+      "last_complete_label": "2025-12-31T23:00:00"
+    }
+  },
+  "january_descriptive": {
+    "1": {
+      "hourly_rows": 744,
+      "complete_hours": 744,
+      "incomplete_hours": 0,
+      "last_complete_label": "2026-01-31T23:00:00"
+    },
+    "2": {
+      "hourly_rows": 744,
+      "complete_hours": 744,
+      "incomplete_hours": 0,
+      "last_complete_label": "2026-01-31T23:00:00"
+    }
+  }
+}

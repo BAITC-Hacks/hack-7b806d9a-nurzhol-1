@@ -1,0 +1,34 @@
+{
+  "1": {
+    "training_rows": 22899,
+    "candidate_rows_before_cutoff": 24624,
+    "incomplete_rows_excluded": 1725,
+    "invalid_complete_rows_excluded": 0,
+    "first_training_time_naive": "2023-03-11T00:00:00",
+    "last_training_time_naive": "2025-12-30T23:00:00",
+    "cutoff_exclusive_naive": "2025-12-31T00:00:00",
+    "wind_min_ms": 0.0,
+    "wind_max_ms": 20.398333333333333,
+    "temperature_min_c": -18.426666666666662,
+    "temperature_max_c": 43.068333333333335,
+    "power_min": 0.005,
+    "power_max": 0.9983333333333334,
+    "training_mean_power": 0.3736853865525423
+  },
+  "2": {
+    "training_rows": 24017,
+    "candidate_rows_before_cutoff": 24624,
+    "incomplete_rows_excluded": 607,
+    "invalid_complete_rows_excluded": 0,
+    "first_training_time_naive": "2023-03-11T00:00:00",
+    "last_training_time_naive": "2025-12-30T23:00:00",
+    "cutoff_exclusive_naive": "2025-12-31T00:00:00",
+    "wind_min_ms": 0.2266666666666666,
+    "wind_max_ms": 19.406666666666663,
+    "temperature_min_c": -18.648333333333333,
+    "temperature_max_c": 43.22333333333333,
+    "power_min": 0.0016666666666666,
+    "power_max": 0.9916666666666668,
+    "training_mean_power": 0.36829703959695215
+  }
+}

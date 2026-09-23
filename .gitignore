@@ -46,3 +46,20 @@ coverage/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# WindOps: downloaded caches, local jobs and superseded drafts
+data/cache/
+data/raw/
+.mpl-cache/
+.matplotlib/
+catboost_info/
+.playwright-mcp/
+outputs/demo/cache/
+outputs/demo/jobs/
+outputs/demo/weather/
+outputs/demo/qa/
+outputs/demo/ui_verification.json
+outputs/ui-before/
+outputs/first_forecast/
+# Experimental models are opt-in and never activated by a clone.
+outputs/gfs_ml/active.json

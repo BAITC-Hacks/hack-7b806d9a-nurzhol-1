@@ -1,0 +1,34 @@
+{
+  "affine_wind": {
+    "file": "affine_wind/manifest.json",
+    "sha256": "095da3fb73b12e71be90bf301ae8d3bd878f77fa691a2d0937f24d091cd475ea"
+  },
+  "catboost_gfs": {
+    "file": "catboost_gfs/manifest.json",
+    "sha256": "5298478ba4d6bfa9dd14dbc30790f2fea0efc00e429c8e640f6d8a749c463627"
+  },
+  "metrics": {
+    "file": "metrics.csv",
+    "rows": 18,
+    "sha256": "7e9491368ac1c82c3df48f0ddf42a764975e3e63711a40ee0b5b4ba90be92e43"
+  },
+  "pairs": {
+    "file": "pairs.csv",
+    "rows": 2976,
+    "sha256": "a1f95bc630d1105f9258fe0ea412a19962ddacd9d6c286b9872c51bee3e6e245"
+  },
+  "predictions": {
+    "file": "predictions.csv",
+    "rows": 8844,
+    "sha256": "4c3f2b39f05e14281b822918c74ba56ec999fe1bdb50554ec596cf7582542bbd"
+  },
+  "raw_empirical": {
+    "file": "raw_empirical/manifest.json",
+    "sha256": "15b1ecf46b446d4cdb8de540f874a397261fe9130f493f0f16e4ea24ef4c6a48"
+  },
+  "training_pairs": {
+    "file": "training_pairs.csv",
+    "rows": 2688,
+    "sha256": "3fba1a2a21c54db3b737abbfab2cb956d977e8a6fa072319d35c2b3a9068f020"
+  }
+}

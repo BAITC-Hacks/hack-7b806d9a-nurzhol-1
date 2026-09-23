@@ -1,0 +1,26 @@
+{
+  "created_at_utc": "2026-09-23T10:43:50.266838+00:00",
+  "december_selected_candidate": "affine_wind",
+  "december_gate_passed": true,
+  "default_activation_performed": false,
+  "working_model": "empirical_curve",
+  "decision": "hold_default_activation",
+  "reason": "January descriptive check shows both turbines regress; preserve working baseline and export selected December candidate separately.",
+  "january_regression": [
+    {
+      "turbine_id": 1,
+      "baseline_rmse": 0.2450144899177997,
+      "calibrated_rmse": 0.2670925932411019,
+      "relative_rmse_increase": 0.09010937814620368
+    },
+    {
+      "turbine_id": 2,
+      "baseline_rmse": 0.2528283399772655,
+      "calibrated_rmse": 0.2718721593257998,
+      "relative_rmse_increase": 0.0753231198300266
+    }
+  ],
+  "protocol_note": "December algorithm selection and parameters remain unchanged. Withholding default activation is an explicitly recorded operational deviation from the planned automatic promotion, informed by the observed January regression. January is not a new independent test.",
+  "experimental_forecasts": "february_experimental/forecast_48h_long.csv",
+  "working_february_manifest_sha256": "c1b04d4c89589c2cc937e441d0c0c70c2e9ac3bdf4f87d74b4b69652b8f10cd3"
+}

@@ -1,0 +1,52 @@
+{
+  "verified_at_utc": "2026-09-23T09:28:49.341915+00:00",
+  "status": "PASS",
+  "unit_tests": {
+    "command": "MPLCONFIGDIR=\"$PWD/.mpl-cache\" .venv/bin/python -m unittest discover -s tests -v",
+    "passed": 27,
+    "failed": 0,
+    "duration_seconds": 1.574
+  },
+  "hourly_rows": 50784,
+  "complete_hourly_rows": 48452,
+  "weather_rows": 3072,
+  "weather_runs": 32,
+  "weather_complete_48_hours_each_site_each_run": true,
+  "minimum_publication_margin_minutes": 117.63333333333334,
+  "prediction_rows": 27648,
+  "metric_rows": 54,
+  "max_metric_recalculation_difference": 1.3877787807814457e-16,
+  "all_models_have_identical_score_cases": true,
+  "demo_rows": 48,
+  "demo_power_bounds": [
+    0.0078857550948515,
+    0.7288028422277494
+  ],
+  "february_actual_targets": 0,
+  "timezone_confirmed": false,
+  "raw_sources": {
+    "1": {
+      "sha256": "c4c341582fb2dd348b7187f0128cff265fe055f469413871ebb5db50eef58b5b",
+      "unchanged": true
+    },
+    "2": {
+      "sha256": "820578cd18bb557cd30c2e102f3ae5a386dfc6c489a5a15743339c2b017305e5",
+      "unchanged": true
+    }
+  },
+  "sha256": {
+    "scripts/prepare_hourly.py": "27e44d9cf9b17aaf761607a6aceccb6b6cd52554687756adae7e16a2c48f18ca",
+    "scripts/fetch_noaa.py": "93577e114b06dd99bc0af2de5bee3510f09393ac32c6373a28d9f56af8b3af16",
+    "scripts/evaluate_baseline.py": "a7837d6e31b3959e9b9658bdb9d4fd12af81136b60df16d34681be65cdf21a8c",
+    "requirements.txt": "6b7f6cdfe4128d736990529cd31b9bba3b3875f65b4e5914ae2f2929beadd3a6",
+    "data/processed/hourly.csv": "db0ce4485e861c01031ea4e8dab1c6f11528c5c2d7c302a8ba832a14407bb2eb",
+    "data/weather/noaa_forecasts.csv": "ebca055594d2370e760b0b114ed78c7a26659a555e46cf7cc7bbc304382b29e6",
+    "outputs/baseline/predictions.csv": "2ded02e3c556e94439d6635a677ad829bee8a3af270e5e8eed0625eb720137d7",
+    "outputs/baseline/metrics.csv": "625efc6a4dda47d608231ed5274e1e1159d448c87cde93f38f75e1f716e9ff61",
+    "outputs/baseline/forecast_48h_utc.csv": "bad86eaafdbc06c6d3f7d35130f5c35c4f927b22ed68a162990caab9054a33d7",
+    "outputs/baseline/empirical_curves.json": "204ed64bc6d9fa64157d2256888ae687070ec6f9d0d554829fd4d8827c29541c",
+    "outputs/baseline/catboost_1.cbm": "510917e991071563ef88d246e3e8e24b2b6fb7d26f863e111586409877fdfb89",
+    "outputs/baseline/catboost_2.cbm": "88d59c43e92199be48e19bec22df4fcf9f01eec9bf1ebf2b19805fe74ea91f0f"
+  },
+  "independent_review": "PASS: separate agent recalculated all 54 metrics, confirmed identical cases, complete weather coverage and compact forecast equality across all timezone hypotheses."
+}

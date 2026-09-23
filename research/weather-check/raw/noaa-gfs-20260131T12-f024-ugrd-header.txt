@@ -1,0 +1,13 @@
+HTTP/1.1 206 Partial Content
+x-amz-id-2: kNWzO1QIKEP0Fbz61hT+KaxLGfVo6pPfK75IunIIls71PL9wgLRhH7ErLjtnsjNudSutXL2zlvdce6WuSHIPQ2oB8ayFqxpE
+x-amz-request-id: 1M65VBGFGCG5EQBB
+Date: Wed, 23 Sep 2026 08:58:30 GMT
+Last-Modified: Sat, 31 Jan 2026 15:37:53 GMT
+ETag: "7187861545fa29f0af32a38e9c6b00a3"
+x-amz-server-side-encryption: AES256
+Accept-Ranges: bytes
+Content-Range: bytes 497823535-497823550/539031306
+Content-Type: binary/octet-stream
+Content-Length: 16
+Server: AmazonS3
+

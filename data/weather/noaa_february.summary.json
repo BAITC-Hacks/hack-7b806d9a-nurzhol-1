@@ -1,0 +1,12 @@
+{
+  "runs": 29,
+  "forecast_hours": 1392,
+  "rows": 2784,
+  "start_run": "2026-01-31T12:00:00+00:00",
+  "end_run": "2026-02-28T12:00:00+00:00",
+  "interpolation": "bilinear on U,V and temperature; wind magnitude after interpolation",
+  "retrieval_seconds": 473.6,
+  "source": "https://noaa-gfs-bdp-pds.s3.amazonaws.com",
+  "origin": "run time + 6 hours",
+  "timezone": "UTC"
+}

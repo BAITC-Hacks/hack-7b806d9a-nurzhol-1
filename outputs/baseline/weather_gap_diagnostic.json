@@ -1,0 +1,19 @@
+{
+  "purpose": "January diagnostic only. Observed target-hour wind is unavailable at issue time; this is not a forecast or achievable performance guarantee. January already used for model comparison.",
+  "results": [
+    {
+      "turbine_id": 1,
+      "cases": 1464,
+      "forecast_input_rmse": 0.24501448991779978,
+      "observed_wind_diagnostic_rmse_NOT_FORECAST": 0.05733021249006622,
+      "forecast_wind_bias_ms": -0.46138130815550543
+    },
+    {
+      "turbine_id": 2,
+      "cases": 1464,
+      "forecast_input_rmse": 0.25282833997726556,
+      "observed_wind_diagnostic_rmse_NOT_FORECAST": 0.07144887720789761,
+      "forecast_wind_bias_ms": -0.589413574709594
+    }
+  ]
+}

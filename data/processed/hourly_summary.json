@@ -1,0 +1,105 @@
+{
+  "output_path": "/Users/sanjiro/Desktop/hack alem/data/processed/hourly.csv",
+  "output_rows": 50784,
+  "complete_hours": 48452,
+  "incomplete_hours": 2332,
+  "grid_start": "2023-03-11 00:00:00",
+  "grid_end": "2026-01-31 23:00:00",
+  "validation_start": "2026-01-01 00:00:00",
+  "timezone": "UTC+05:00 fixed offset; source wall-clock labels preserved without conversion",
+  "timezone_confirmed": true,
+  "source_utc_offset_hours": 5,
+  "timezone_confirmation_source": "user: время +5",
+  "timestamp_interval_convention": "assumed start-of-interval; H:00 through H:50 belong to hour H:00; source convention unconfirmed",
+  "aggregation": "arithmetic mean for wind, normalized power, and temperature; power is not summed",
+  "complete_hour_rule": "exactly 6 unique timestamps on the 10-minute grid, with all 3 measurements finite at every timestamp",
+  "incomplete_hour_policy": "retain hourly row and observation count; all 3 aggregate values are blank/NaN; no imputation",
+  "split_rule": "train before 2026-01-01 00:00:00; validation is January 2026",
+  "source_coverage_note": "Filename mentions February 2026; supplied observations end in January 2026. No February observations are generated.",
+  "columns": [
+    "time_naive",
+    "turbine_id",
+    "wind_speed_ms",
+    "power_normalized",
+    "temperature_c",
+    "observations",
+    "is_complete",
+    "split"
+  ],
+  "turbines": [
+    {
+      "turbine_id": 1,
+      "source_path": "/Users/sanjiro/Desktop/Dataset HackAlemAI для участников 11.03.2023-28.02.2026 - turbine 1.csv",
+      "source_sha256": "c4c341582fb2dd348b7187f0128cff265fe055f469413871ebb5db50eef58b5b",
+      "source_rows": 142360,
+      "source_start": "2023-03-11 00:00:00",
+      "source_end": "2026-01-31 23:50:00",
+      "source_was_sorted": true,
+      "hours": 25392,
+      "complete_hours": 23667,
+      "incomplete_hours": 1725,
+      "missing_hours": 1629,
+      "partial_hours": 96,
+      "observation_count_histogram": {
+        "0": 1629,
+        "1": 10,
+        "2": 10,
+        "3": 15,
+        "4": 22,
+        "5": 39,
+        "6": 23667
+      },
+      "splits": {
+        "train": {
+          "hours": 24648,
+          "complete_hours": 22923,
+          "incomplete_hours": 1725,
+          "missing_hours": 1629
+        },
+        "validation": {
+          "hours": 744,
+          "complete_hours": 744,
+          "incomplete_hours": 0,
+          "missing_hours": 0
+        }
+      }
+    },
+    {
+      "turbine_id": 2,
+      "source_path": "/Users/sanjiro/Desktop/Dataset HackAlemAI для участников 11.03.2023-28.02.2026 - turbine 2.csv",
+      "source_sha256": "820578cd18bb557cd30c2e102f3ae5a386dfc6c489a5a15743339c2b017305e5",
+      "source_rows": 149499,
+      "source_start": "2023-03-11 00:00:00",
+      "source_end": "2026-01-31 23:50:00",
+      "source_was_sorted": true,
+      "hours": 25392,
+      "complete_hours": 24785,
+      "incomplete_hours": 607,
+      "missing_hours": 388,
+      "partial_hours": 219,
+      "observation_count_histogram": {
+        "0": 388,
+        "1": 26,
+        "2": 35,
+        "3": 24,
+        "4": 49,
+        "5": 85,
+        "6": 24785
+      },
+      "splits": {
+        "train": {
+          "hours": 24648,
+          "complete_hours": 24041,
+          "incomplete_hours": 607,
+          "missing_hours": 388
+        },
+        "validation": {
+          "hours": 744,
+          "complete_hours": 744,
+          "incomplete_hours": 0,
+          "missing_hours": 0
+        }
+      }
+    }
+  ]
+}

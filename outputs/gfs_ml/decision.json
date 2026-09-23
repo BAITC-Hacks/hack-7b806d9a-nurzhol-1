@@ -1,0 +1,181 @@
+{
+  "baseline": "raw_empirical",
+  "baseline_pooled_metrics": {
+    "bias": -0.1382183849758166,
+    "mae": 0.22057207807353402,
+    "n": 2948,
+    "rmse": 0.3094371450194203
+  },
+  "candidates": {
+    "affine_wind": {
+      "checks": [
+        {
+          "baseline_rmse": 0.3053913603754024,
+          "candidate_rmse": 0.27355932939565714,
+          "check": "total_rmse_improvement",
+          "passed": true,
+          "relative_improvement": 0.10423356751355284,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.2940424340997792,
+          "candidate_rmse": 0.26519532929287304,
+          "check": "horizon_nonworsening",
+          "horizon": "1-24",
+          "passed": true,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.31633338889936163,
+          "candidate_rmse": 0.2816750800480013,
+          "check": "horizon_nonworsening",
+          "horizon": "25-48",
+          "passed": true,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.3134631460547595,
+          "candidate_rmse": 0.2788009829087938,
+          "check": "total_rmse_improvement",
+          "passed": true,
+          "relative_improvement": 0.11057811287298991,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.3030656749886006,
+          "candidate_rmse": 0.2705121687108696,
+          "check": "horizon_nonworsening",
+          "horizon": "1-24",
+          "passed": true,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.3235266364811388,
+          "candidate_rmse": 0.2868503838609268,
+          "check": "horizon_nonworsening",
+          "horizon": "25-48",
+          "passed": true,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.2629720896979111,
+          "candidate_rmse": 0.2303825273893052,
+          "check": "half_month_improvement",
+          "half": "December 1–15",
+          "passed": true
+        },
+        {
+          "baseline_rmse": 0.34670047255447245,
+          "candidate_rmse": 0.31241615812713186,
+          "check": "half_month_improvement",
+          "half": "December 16–31",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "pooled_metrics": {
+        "bias": 0.012481959566481519,
+        "mae": 0.20134540228498707,
+        "n": 2948,
+        "rmse": 0.27618192316338974
+      }
+    },
+    "catboost_gfs": {
+      "checks": [
+        {
+          "baseline_rmse": 0.3053913603754024,
+          "candidate_rmse": 0.2958128256950849,
+          "check": "total_rmse_improvement",
+          "passed": false,
+          "relative_improvement": 0.03136478605204507,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.2940424340997792,
+          "candidate_rmse": 0.29086562892966983,
+          "check": "horizon_nonworsening",
+          "horizon": "1-24",
+          "passed": true,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.31633338889936163,
+          "candidate_rmse": 0.3006786350886424,
+          "check": "horizon_nonworsening",
+          "horizon": "25-48",
+          "passed": true,
+          "turbine_id": 1
+        },
+        {
+          "baseline_rmse": 0.3134631460547595,
+          "candidate_rmse": 0.3002411713816944,
+          "check": "total_rmse_improvement",
+          "passed": false,
+          "relative_improvement": 0.04218031637682629,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.3030656749886006,
+          "candidate_rmse": 0.2952224831961909,
+          "check": "horizon_nonworsening",
+          "horizon": "1-24",
+          "passed": true,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.3235266364811388,
+          "candidate_rmse": 0.3051773376264673,
+          "check": "horizon_nonworsening",
+          "horizon": "25-48",
+          "passed": true,
+          "turbine_id": 2
+        },
+        {
+          "baseline_rmse": 0.2629720896979111,
+          "candidate_rmse": 0.269659334991807,
+          "check": "half_month_improvement",
+          "half": "December 1–15",
+          "passed": false
+        },
+        {
+          "baseline_rmse": 0.34670047255447245,
+          "candidate_rmse": 0.32190537148172077,
+          "check": "half_month_improvement",
+          "half": "December 16–31",
+          "passed": true
+        }
+      ],
+      "passed": false,
+      "pooled_metrics": {
+        "bias": 0.06246865512806277,
+        "mae": 0.22907523623642684,
+        "n": 2948,
+        "rmse": 0.29802621065105805
+      }
+    }
+  },
+  "gate_passed": true,
+  "independent_test": false,
+  "january_used_for_selection": false,
+  "rule": "Each turbine RMSE improves >=5%; each turbine/horizon does not worsen; both pooled month halves improve",
+  "selected_candidate": "affine_wind",
+  "selection_period": "2025-12",
+  "source_hashes": {
+    "hourly": {
+      "file": "hourly.csv",
+      "sha256": "db0ce4485e861c01031ea4e8dab1c6f11528c5c2d7c302a8ba832a14407bb2eb"
+    },
+    "january_weather": {
+      "file": "noaa_forecasts.csv",
+      "sha256": "ebca055594d2370e760b0b114ed78c7a26659a555e46cf7cc7bbc304382b29e6"
+    },
+    "locked_protocol": {
+      "file": "2026-09-23-gfs-ml-experiment.md",
+      "sha256": "e5f8ce74a44245a7382870b1525d0b78d2cd4eab78f89559ec83c3c4b60c2f0b"
+    },
+    "november_december_weather": {
+      "file": "noaa_nov_dec.csv",
+      "sha256": "c33f9d24fe13f50594ecf25f75e3be181909ea3296781f0519879cf57c458e97"
+    }
+  }
+}

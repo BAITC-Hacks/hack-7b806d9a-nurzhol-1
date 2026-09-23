@@ -1,0 +1,11 @@
+{
+  "verified_at_utc": "2026-09-23T10:40:31.228044+00:00",
+  "runs": 62,
+  "rows": 5952,
+  "decoded_grib_hours_checked": 2976,
+  "csv_matches_extracted_points": true,
+  "point_metadata_matches_noaa_listings": true,
+  "minimum_publication_margin_minutes": 116.75,
+  "weather_sha256": "c33f9d24fe13f50594ecf25f75e3be181909ea3296781f0519879cf57c458e97",
+  "protocol_sha256": "e5f8ce74a44245a7382870b1525d0b78d2cd4eab78f89559ec83c3c4b60c2f0b"
+}

@@ -1,0 +1,109 @@
+{
+  "verified_at_utc": "2026-09-23T09:00:32.464116+00:00",
+  "coordinates": [
+    {
+      "turbine": 1,
+      "latitude": 43.64515,
+      "longitude": 78.535604,
+      "source": "https://maps.app.goo.gl/iN6svMt69D5qRpFU9"
+    },
+    {
+      "turbine": 2,
+      "latitude": 43.643198,
+      "longitude": 78.538828,
+      "source": "https://maps.app.goo.gl/8UQMwsYavY6nLvFY8"
+    }
+  ],
+  "distance_m": 338.2,
+  "noaa": {
+    "cycles": 29,
+    "forecast_hours_per_cycle": 48,
+    "forecast_hour_records": 1392,
+    "objects_including_indices": 2784,
+    "missing_objects": 0,
+    "objects_published_after_example_cutoff": 0,
+    "example_cutoff_utc_hour": 18,
+    "run_utc_hour": 12,
+    "all_test_cycles_verified": true,
+    "jan1_validation_run_spot_checked": true,
+    "fields_spot_checked": [
+      "581:416241411:d=2026013112:TMP:2 m above ground:24 hour fcst:",
+      "689:497823535:d=2026013112:UGRD:100 m above ground:24 hour fcst:",
+      "690:498794195:d=2026013112:VGRD:100 m above ground:24 hour fcst:"
+    ],
+    "partial_grib_request_http_status": 206,
+    "grib_edition": 2,
+    "grib_fields_decoded": false
+  },
+  "open_meteo": {
+    "model": "gfs_global",
+    "locations": [
+      {
+        "turbine": 1,
+        "hours": 1464,
+        "variables": 9,
+        "null_or_nonfinite": 0,
+        "grid_latitude": 43.638138,
+        "grid_longitude": 78.515625,
+        "timezone": "GMT"
+      },
+      {
+        "turbine": 2,
+        "hours": 1464,
+        "variables": 9,
+        "null_or_nonfinite": 0,
+        "grid_latitude": 43.638138,
+        "grid_longitude": 78.515625,
+        "timezone": "GMT"
+      }
+    ],
+    "same_returned_grid_and_values": true,
+    "exact_run_or_available_at_returned": false
+  },
+  "timezone": {
+    "civil_zone": "Asia/Almaty",
+    "feb2026_utc_offset_hours": 5,
+    "transition_before_local": "2024-02-29T23:59:59+06:00",
+    "transition_after_local": "2024-02-29T23:00:00+05:00",
+    "csv_timezone_confirmed": false,
+    "csv_timestamp_interval_start_or_end_confirmed": false
+  },
+  "raw_sha256": {
+    "noaa-gfs-20260131T12-f024-ugrd-header.bin": "baea693b265e17df8cd69875890648e2cd366c47a666e0a273ee621cf178e401",
+    "noaa-gfs-20260131T12-f024-ugrd-header.txt": "77a814f43c4f48a11e35902f1f3ec7e769ee9e2a27ea86ed0e3f2c5eedc2c250",
+    "noaa-gfs-20260131T12-f024.idx": "6c54316d6c64be8b30bece708260bd3ea44add72bff3f9843d864c4e524ea40a",
+    "noaa-gfs-20260131T12-list.xml": "47a9ff0ed8eef3c1a4236199f51593e6c8929bf88b595a5f2476139833649303",
+    "noaa-gfs-20260201T12-list.xml": "244f22c25e0f0a8954a73d82ab47eb7f239de4ac1e45f080faaf5c0a8fa30bbf",
+    "noaa-gfs-20260202T12-list.xml": "2e400451fc4434ddf84ba51430cf08e3493cb5bd8a1be225f6b271098af09f3c",
+    "noaa-gfs-20260203T12-list.xml": "ce08492295b8341fe703be06a99672efcf75d744150c1ae65845a8314c47f999",
+    "noaa-gfs-20260204T12-list.xml": "2af6cc4e5cd2250aea2c31bb6b339cbb164873b3e759f5314c1809286f3c33f3",
+    "noaa-gfs-20260205T12-list.xml": "5d1383e55988f6c456c75c3dab3505181bb1a6f41817f6bd83049162e4b4cc38",
+    "noaa-gfs-20260206T12-list.xml": "324f5c235ee3858f60cc53af6362c0bf5515f71c5793ddd007dde1ef97eba4a1",
+    "noaa-gfs-20260207T12-list.xml": "b37e12e7918c899b5ed5bcfcaff42a73284975b48f77c062298ae0838bb68aca",
+    "noaa-gfs-20260208T12-list.xml": "b5e214d8a52cf5eee1aec6031f438dd76e2e9a8d8412918f3eee1b7b16f0c511",
+    "noaa-gfs-20260209T12-list.xml": "4a8c788345a037aaa42bf94a89e150e55cdc99d473c83dc45bf087f7462591cd",
+    "noaa-gfs-20260210T12-list.xml": "f40fcec5413b4a2ad0ed365aa6304ce898d9762cd1e6bb127d867feceeb83297",
+    "noaa-gfs-20260211T12-list.xml": "70f35d979314db7bfad1ecb8618505b983ae0996c09e0e1f37f30193e4a3b46b",
+    "noaa-gfs-20260212T12-list.xml": "cd95793f66b31ca0ce606339c9ed9e84f7780e5e0ee8ea16375d8bb50761e055",
+    "noaa-gfs-20260213T12-list.xml": "78768815ab972a9f5324aa1bf01c243811de6eb207bc13980598d49b2392f607",
+    "noaa-gfs-20260214T12-list.xml": "369b77838f2895873229f3356f50d91b0589a7c510b58222e1ca6fd2efbb01b5",
+    "noaa-gfs-20260215T12-list.xml": "33a92c980bed033486539eb4be82e031d617b309ae1bd7f62f09dc813958886a",
+    "noaa-gfs-20260216T12-list.xml": "c7f8ba805d1675d346e3f5d09ad1ffbb05dddbc8a4aa25d8fd739cc5cceaeb7f",
+    "noaa-gfs-20260217T12-list.xml": "fe58847d7c17e2f58fa0334229704f21293e1cfc069431c3ae48b2e1ce60b265",
+    "noaa-gfs-20260218T12-list.xml": "e8311d9708342f71f66aed2f7957ba394ec5f5a1d76eb4dfacf3d7f68ddc30da",
+    "noaa-gfs-20260219T12-list.xml": "ada9df39276b9749cb4918c034df413929cd4320d371f98a9390e7d7e0ad5c01",
+    "noaa-gfs-20260220T12-list.xml": "a99c99c03e56274bea931e6c6dbbceb075517eb15ab4556885e493fe15d716b2",
+    "noaa-gfs-20260221T12-list.xml": "7ff0f38630cbd01c5b6b5720bc3f7fce5f0bc30211d3ce76c7a755cb6452e44e",
+    "noaa-gfs-20260222T12-list.xml": "e7a158a492757074331624a018cbe17a7f883614c331842d45f280e01b2c405a",
+    "noaa-gfs-20260223T12-list.xml": "34c8223653984a3c9a6f4672429ed07d62e19ce1cf6b15a7b2fd108b32713a5c",
+    "noaa-gfs-20260224T12-list.xml": "34932d5e3ff3fb56a79dc493082e26c389e46dea8d599eb6d9cd36649cc7bcb2",
+    "noaa-gfs-20260225T12-list.xml": "021790fe5ebd7988f2278313e5e730a87a7fae21ef74bf9aec4d36463a76498c",
+    "noaa-gfs-20260226T12-list.xml": "d816b1fcf6e2718013f30390eb88561f4f8d68c34c5ce87da9d1ecb341baa9f7",
+    "noaa-gfs-20260227T12-list.xml": "99325f0406c01e899e1439ee86509d67bac16ef879a2c954991f876b45a97446",
+    "noaa-gfs-20260228T12-list.xml": "9c43c95c63860cdcd0f852945be212353baa505e5c1d50e043d96893adaf24bd",
+    "noaa-gfs-validation-20260101T12-list.xml": "1d5e30e7b10045279974dc797144452a68c7db0e42afdced65b6bb7893ac145a",
+    "openmeteo-gfs-20260101-20260302.json": "7a665e4d13f14d0d8a0301a6db746dd0966391ffc1fcf82d43a8ff25eb9f77db",
+    "openmeteo-gfs-20260131-20260202.json": "fdaedc9c2158eb267ea6c5e864592ee9899529cd97aa8040bd88fb9369ea06ed",
+    "openmeteo-timezone-auto.json": "1b851ea37fb17accfc1e1533e313a1ad9e080f67cdc68444a3cd12f13a348eec"
+  }
+}

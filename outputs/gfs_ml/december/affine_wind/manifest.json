@@ -1,0 +1,54 @@
+{
+  "artifacts": {
+    "calibration": {
+      "file": "calibration.json",
+      "sha256": "8ddb4a42d7eb5db77fd6d66c411111c566a0ea4bf4ee1e4be6991950294099bd"
+    },
+    "curves": {
+      "file": "curves.json",
+      "sha256": "463af3fcf9e2f40bd2758a8bcc5f2e4c67c5a500dc0f3329abc7c0cfda48fe07"
+    }
+  },
+  "candidate": "affine_wind",
+  "feature_names": [
+    "wind_speed_100m_ms",
+    "temperature_2m_c",
+    "wind_direction_sin",
+    "wind_direction_cos",
+    "lead_hours",
+    "local_hour_sin",
+    "local_hour_cos"
+  ],
+  "implementation_version": "gfs-ml-v1",
+  "metadata": {
+    "catboost_parameters": null,
+    "id": "affine_wind",
+    "label": "Коррекция ветра GFS + эмпирическая кривая",
+    "labels_end_strictly_before_utc": "2025-11-29T18:00:00+00:00",
+    "timezone": "UTC+5",
+    "training": {
+      "1": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 1344,
+        "last_pair_label_end_utc": "2025-11-28T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-11-28T19:00:00+00:00",
+        "last_target_local": "2025-11-28T23:00:00+05:00",
+        "station_curve_rows": 22135,
+        "unique_target_hours": 672
+      },
+      "2": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 1344,
+        "last_pair_label_end_utc": "2025-11-28T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-11-28T19:00:00+00:00",
+        "last_target_local": "2025-11-28T23:00:00+05:00",
+        "station_curve_rows": 23259,
+        "unique_target_hours": 672
+      }
+    },
+    "training_cutoff": "2025-11-29T00:00:00+05:00",
+    "training_cutoff_exclusive": true,
+    "training_cutoff_semantics": "target interval start"
+  },
+  "schema_version": 1
+}

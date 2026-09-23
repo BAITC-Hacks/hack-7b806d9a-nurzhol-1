@@ -1,0 +1,64 @@
+{
+  "artifacts": {
+    "turbine_1": {
+      "file": "turbine_1.cbm",
+      "sha256": "ef3da03d7d8b69b73f29fafa371d15d3bc822e6189110616c5d7871b8260245a"
+    },
+    "turbine_2": {
+      "file": "turbine_2.cbm",
+      "sha256": "9f319513cb769522d6a3578a2e9e85a6dc20bd30242d6402ca35238235332d21"
+    }
+  },
+  "candidate": "catboost_gfs",
+  "feature_names": [
+    "wind_speed_100m_ms",
+    "temperature_2m_c",
+    "wind_direction_sin",
+    "wind_direction_cos",
+    "lead_hours",
+    "local_hour_sin",
+    "local_hour_cos"
+  ],
+  "implementation_version": "gfs-ml-v1",
+  "metadata": {
+    "catboost_parameters": {
+      "allow_writing_files": false,
+      "depth": 4,
+      "iterations": 400,
+      "l2_leaf_reg": 10,
+      "learning_rate": 0.03,
+      "loss_function": "RMSE",
+      "random_seed": 42,
+      "thread_count": 2,
+      "verbose": false
+    },
+    "id": "catboost_gfs",
+    "label": "CatBoost: прогноз GFS → мощность",
+    "labels_end_strictly_before_utc": "2025-12-31T18:00:00+00:00",
+    "timezone": "UTC+5",
+    "training": {
+      "1": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 2872,
+        "last_pair_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_target_local": "2025-12-30T23:00:00+05:00",
+        "station_curve_rows": 22899,
+        "unique_target_hours": 1436
+      },
+      "2": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 2860,
+        "last_pair_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_target_local": "2025-12-30T23:00:00+05:00",
+        "station_curve_rows": 24017,
+        "unique_target_hours": 1430
+      }
+    },
+    "training_cutoff": "2025-12-31T00:00:00+05:00",
+    "training_cutoff_exclusive": true,
+    "training_cutoff_semantics": "target interval start"
+  },
+  "schema_version": 1
+}

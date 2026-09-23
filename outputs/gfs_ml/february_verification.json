@@ -1,0 +1,11 @@
+{
+  "experimental_rows": 2784,
+  "experimental_day_ahead_rows": 1344,
+  "model": "affine_wind",
+  "power_min": 0.0099814736571444,
+  "power_max": 0.9797957174584518,
+  "hashes_match": true,
+  "working_exports_unchanged": true,
+  "default_model": "empirical_curve",
+  "activation_performed": false
+}

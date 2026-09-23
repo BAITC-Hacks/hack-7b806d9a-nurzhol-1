@@ -1,0 +1,60 @@
+{
+  "activation_performed": false,
+  "candidate_parameters": {
+    "allow_writing_files": false,
+    "depth": 4,
+    "iterations": 400,
+    "l2_leaf_reg": 10,
+    "learning_rate": 0.03,
+    "loss_function": "RMSE",
+    "random_seed": 42,
+    "thread_count": 2,
+    "verbose": false
+  },
+  "december": {
+    "all_evaluation_cases": 2976,
+    "candidate_count": 3,
+    "earliest_issue_utc": "2025-11-29T18:00:00+00:00",
+    "latest_training_label_end_utc": "2025-11-28T19:00:00+00:00",
+    "scored_cases": 2948,
+    "training_cases": 2688
+  },
+  "deployment_manifest": "/Users/sanjiro/Desktop/hack alem/outputs/gfs_ml/deployment/manifest.json",
+  "gate_passed": true,
+  "january_descriptive": {
+    "all_evaluation_cases": 2928,
+    "earliest_issue_utc": "2025-12-31T18:00:00+00:00",
+    "independent_test": false,
+    "latest_training_label_end_utc": "2025-12-30T19:00:00+00:00",
+    "scored_cases": 2928,
+    "used_for_selection": false
+  },
+  "limitations": [
+    "December is a model-selection period, not an independent test.",
+    "January already informed earlier model comparison; it is descriptive only.",
+    "November–January training does not establish year-round generalization.",
+    "Repeated forecast cases for one target hour are correlated.",
+    "No February actual power is available; February accuracy cannot be measured.",
+    "Fixed UTC+5; source interval-start convention remains an assumption."
+  ],
+  "protocol": "2026-09-23-gfs-ml-experiment",
+  "selected_candidate": "affine_wind",
+  "source_hashes": {
+    "hourly": {
+      "file": "hourly.csv",
+      "sha256": "db0ce4485e861c01031ea4e8dab1c6f11528c5c2d7c302a8ba832a14407bb2eb"
+    },
+    "january_weather": {
+      "file": "noaa_forecasts.csv",
+      "sha256": "ebca055594d2370e760b0b114ed78c7a26659a555e46cf7cc7bbc304382b29e6"
+    },
+    "locked_protocol": {
+      "file": "2026-09-23-gfs-ml-experiment.md",
+      "sha256": "e5f8ce74a44245a7382870b1525d0b78d2cd4eab78f89559ec83c3c4b60c2f0b"
+    },
+    "november_december_weather": {
+      "file": "noaa_nov_dec.csv",
+      "sha256": "c33f9d24fe13f50594ecf25f75e3be181909ea3296781f0519879cf57c458e97"
+    }
+  }
+}

@@ -1,0 +1,351 @@
+{
+  "metadata": {
+    "timezone_confirmed": true,
+    "source_utc_offset_hours": 5,
+    "timezone_confirmation_source": "user",
+    "utc_offsets_evaluated": [
+      5
+    ],
+    "sensitivity_utc_offsets": [],
+    "timezone_policy": "The user confirmed CSV timezone UTC+5. Other explicitly requested offsets are sensitivity checks, not confirmed source timezones.",
+    "raw_interval_label_assumption": "interval_start",
+    "hourly_label_semantics": "Input hourly time_naive denotes interval start. If original 10-minute rows label interval ends, subtract 10 minutes before hourly aggregation; evaluator never shifts already aggregated hours.",
+    "training_cutoff_exclusive_naive": "2025-12-31T00:00:00",
+    "training_freeze_reason": "One day early to avoid using December 31 labels unavailable at the first issue under any timezone hypothesis.",
+    "forecast_coverage": {
+      "expected_cases_per_turbine": 1536,
+      "turbines": {
+        "1": {
+          "received_cases": 1536,
+          "missing_cases": 0,
+          "unexpected_cases": 0,
+          "missing_examples": []
+        },
+        "2": {
+          "received_cases": 1536,
+          "missing_cases": 0,
+          "unexpected_cases": 0,
+          "missing_examples": []
+        }
+      },
+      "complete": true
+    },
+    "validation_local_start_inclusive": "2026-01-01T00:00:00",
+    "validation_local_end_exclusive": "2026-02-01T00:00:00",
+    "first_validation_origin_utc": "2025-12-31T18:00:00+00:00",
+    "last_validation_origin_utc": "2026-01-30T18:00:00+00:00",
+    "demo_origin_utc": "2026-01-31T18:00:00+00:00",
+    "demo_horizons": "1-48 hours after origin; confirmed UTC+5 covers February 1 00:00 through February 2 23:00 local time",
+    "primary_metric": "RMSE on normalized power; 1-48h combined, with UTC+5 as the primary evaluation",
+    "bias_definition": "mean(prediction - actual)",
+    "model_features": {
+      "empirical_curve": [
+        "wind_speed_ms"
+      ],
+      "catboost": [
+        "wind_speed_ms",
+        "temperature_c"
+      ],
+      "forecast_mapping": {
+        "wind_speed_ms": "wind_speed_100m_ms",
+        "temperature_c": "temperature_2m_c"
+      },
+      "output_bounds": [
+        0,
+        1
+      ]
+    },
+    "comparison_protocol": "All models use identical complete January target cases per turbine, timezone and horizon. Overlapping forecast origins are distinct cases; no random split or February tuning.",
+    "hyperparameters": {
+      "empirical_curve": {
+        "bin_width_ms": 0.5,
+        "bin_statistic": "mean"
+      },
+      "catboost": {
+        "enabled": true,
+        "iterations": 300,
+        "depth": 4,
+        "learning_rate": 0.05,
+        "loss_function": "RMSE",
+        "random_seed": 42,
+        "thread_count": 2
+      }
+    },
+    "selection_note": "January ranks are descriptive holdout results, not unbiased post-selection performance. UTC+5 was confirmed by the user, not selected by scores; no February actuals are used.",
+    "january_model_comparisons": [
+      {
+        "utc_offset_hours": 5,
+        "turbine_id": "1",
+        "lowest_january_rmse_model": "empirical_curve",
+        "rmse": 0.24501448991779978,
+        "n": 1464
+      },
+      {
+        "utc_offset_hours": 5,
+        "turbine_id": "2",
+        "lowest_january_rmse_model": "empirical_curve",
+        "rmse": 0.25282833997726556,
+        "n": 1464
+      }
+    ],
+    "training": {
+      "1": {
+        "training_rows": 22899,
+        "candidate_rows_before_cutoff": 24624,
+        "incomplete_rows_excluded": 1725,
+        "invalid_complete_rows_excluded": 0,
+        "first_training_time_naive": "2023-03-11T00:00:00",
+        "last_training_time_naive": "2025-12-30T23:00:00",
+        "cutoff_exclusive_naive": "2025-12-31T00:00:00",
+        "wind_min_ms": 0.0,
+        "wind_max_ms": 20.398333333333333,
+        "temperature_min_c": -18.426666666666662,
+        "temperature_max_c": 43.068333333333335,
+        "power_min": 0.005,
+        "power_max": 0.9983333333333334,
+        "training_mean_power": 0.3736853865525423
+      },
+      "2": {
+        "training_rows": 24017,
+        "candidate_rows_before_cutoff": 24624,
+        "incomplete_rows_excluded": 607,
+        "invalid_complete_rows_excluded": 0,
+        "first_training_time_naive": "2023-03-11T00:00:00",
+        "last_training_time_naive": "2025-12-30T23:00:00",
+        "cutoff_exclusive_naive": "2025-12-31T00:00:00",
+        "wind_min_ms": 0.2266666666666666,
+        "wind_max_ms": 19.406666666666663,
+        "temperature_min_c": -18.648333333333333,
+        "temperature_max_c": 43.22333333333333,
+        "power_min": 0.0016666666666666,
+        "power_max": 0.9916666666666668,
+        "training_mean_power": 0.36829703959695215
+      }
+    },
+    "limitations": [
+      "Original 10-minute start/end labeling still requires confirmation; the source timezone is confirmed UTC+5.",
+      "NOAA 100m model wind and turbine observed wind have different height/exposure/error distributions; turbine hub height is unknown.",
+      "Empirical curves learn observed operating behavior, including curtailment/outages, rather than manufacturer physical power curves.",
+      "Endpoint extrapolation does not model an unobserved high-wind cut-out; inspect rare/extreme and sparse-bin flags.",
+      "Weather availability must be supplied by the archive provenance pipeline; timestamp checks alone do not establish publication history."
+    ]
+  },
+  "metrics": [
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "catboost",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.1681358569,
+      "rmse": 0.2398280978,
+      "bias": -0.0785419057
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "catboost",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.1843425006,
+      "rmse": 0.2603687136,
+      "bias": -0.0662665916
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "catboost",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.1761063374,
+      "rmse": 0.2501409118,
+      "bias": -0.072504866
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "empirical_curve",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.169613549,
+      "rmse": 0.2350678228,
+      "bias": -0.0590079643
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "empirical_curve",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.1857664938,
+      "rmse": 0.2548852549,
+      "bias": -0.0467840637
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "empirical_curve",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.1775576202,
+      "rmse": 0.2450144899,
+      "bias": -0.0529962099
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "training_mean",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.3023936841,
+      "rmse": 0.3421983551,
+      "bias": 0.0576795622
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "training_mean",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.3009140063,
+      "rmse": 0.3409477813,
+      "bias": 0.0574238125
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "1",
+      "model": "training_mean",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.3016659737,
+      "rmse": 0.341583891,
+      "bias": 0.0575537836
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "catboost",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.175213915,
+      "rmse": 0.2526088234,
+      "bias": -0.094740198
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "catboost",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.1900750693,
+      "rmse": 0.2702805063,
+      "bias": -0.0835677132
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "catboost",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.1825226794,
+      "rmse": 0.261449124,
+      "bias": -0.0892455334
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "empirical_curve",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.1742488453,
+      "rmse": 0.2435176563,
+      "bias": -0.0669868179
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "empirical_curve",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.1897574522,
+      "rmse": 0.2621021444,
+      "bias": -0.0555159612
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "empirical_curve",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.181876029,
+      "rmse": 0.25282834,
+      "bias": -0.061345413
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "training_mean",
+      "horizon": "1-24",
+      "n": 744,
+      "forecast_cases": 744,
+      "missing_target_cases": 0,
+      "mae": 0.3038051064,
+      "rmse": 0.3425537511,
+      "bias": 0.057974459
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "training_mean",
+      "horizon": "25-48",
+      "n": 720,
+      "forecast_cases": 720,
+      "missing_target_cases": 0,
+      "mae": 0.3024485502,
+      "rmse": 0.3414492958,
+      "bias": 0.0578873174
+    },
+    {
+      "utc_offset_hours": 5,
+      "turbine_id": "2",
+      "model": "training_mean",
+      "horizon": "1-48",
+      "n": 1464,
+      "forecast_cases": 1464,
+      "missing_target_cases": 0,
+      "mae": 0.3031379476,
+      "rmse": 0.3420110221,
+      "bias": 0.0579316024
+    }
+  ]
+}

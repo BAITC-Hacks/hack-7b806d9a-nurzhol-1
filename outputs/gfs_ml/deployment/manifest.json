@@ -1,0 +1,58 @@
+{
+  "artifacts": {
+    "calibration": {
+      "file": "calibration.json",
+      "sha256": "7461820ddb87dbdfd7f58a4b7bc1f263b4810cdbb124594303fe482aa6bd4cee"
+    },
+    "curves": {
+      "file": "curves.json",
+      "sha256": "257cf0266a6bec8df8c63143c6312287885826ae3bb01c705a130ecc47e6b27b"
+    }
+  },
+  "candidate": "affine_wind",
+  "feature_names": [
+    "wind_speed_100m_ms",
+    "temperature_2m_c",
+    "wind_direction_sin",
+    "wind_direction_cos",
+    "lead_hours",
+    "local_hour_sin",
+    "local_hour_cos"
+  ],
+  "implementation_version": "gfs-ml-v1",
+  "metadata": {
+    "catboost_parameters": null,
+    "decision_sha256": "159b738f62c2327df1abfd242c4071da22027169cc4bb79f7f0bc731e0c25b5a",
+    "frozen_for_all_february_issues": true,
+    "id": "affine_wind",
+    "label": "Коррекция ветра GFS + эмпирическая кривая",
+    "labels_end_strictly_before_utc": "2026-01-31T18:00:00+00:00",
+    "selected_candidate": "affine_wind",
+    "selection_period": "2025-12",
+    "timezone": "UTC+5",
+    "training": {
+      "1": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 4404,
+        "last_pair_label_end_utc": "2026-01-31T17:00:00+00:00",
+        "last_station_label_end_utc": "2026-01-31T17:00:00+00:00",
+        "last_target_local": "2026-01-31T21:00:00+05:00",
+        "station_curve_rows": 23665,
+        "unique_target_hours": 2202
+      },
+      "2": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 4392,
+        "last_pair_label_end_utc": "2026-01-31T17:00:00+00:00",
+        "last_station_label_end_utc": "2026-01-31T17:00:00+00:00",
+        "last_target_local": "2026-01-31T21:00:00+05:00",
+        "station_curve_rows": 24783,
+        "unique_target_hours": 2196
+      }
+    },
+    "training_cutoff": "2026-01-31T22:00:00+05:00",
+    "training_cutoff_exclusive": true,
+    "training_cutoff_semantics": "target interval start"
+  },
+  "schema_version": 1
+}

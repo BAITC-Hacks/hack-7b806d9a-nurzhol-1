@@ -1,0 +1,12 @@
+{
+  "1": {
+    "intercept": 1.5477903346805908,
+    "method": "ordinary least squares; corrected speed clipped at zero",
+    "slope": 0.9900649148409535
+  },
+  "2": {
+    "intercept": 1.5686455070038559,
+    "method": "ordinary least squares; corrected speed clipped at zero",
+    "slope": 1.0023096953188113
+  }
+}

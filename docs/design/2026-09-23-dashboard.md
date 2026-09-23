@@ -1,0 +1,13 @@
+# WindOps workspace redesign
+
+User wants both a modern forecasting workspace and richer interaction. The page is for a wind operator comparing two turbines over the next 24/48 hours. Primary task: inspect a dated forecast, run the agent and export its numerical results.
+
+Direction: a compact weather operations desk. Cool white surfaces (#ffffff), blue-grey canvas (#f3f6fb), navy type (#172b45), blue T1 (#235be8), amber T2 (#b56b16), teal status (#167465). Display uses Trebuchet MS with system fallback; body uses system-ui; numeric data uses SFMono/Consolas. No remote font dependencies.
+
+Layout: narrow navy navigation rail; compact page header and date controls; three forecast summaries; large two-series chart beside the live agent stages. Data provenance and exports remain accessible below. On small screens the rail becomes a header and the agent follows the chart.
+
+Signature: a two-turbine trajectory with a synchronized hourly inspector. This is real forecast data, not decorative wind art. The 24/48 hour toggle, date arrows and comparison mode alter actual data views. Downloads remain explicitly full 48 hours for both turbines.
+
+Quiet surrounding chrome; no decorative KPI metrics, pretend notifications or fabricated agent activity. Preserve all current model, time, source verification and error handling. The prepared model remains unchanged.
+
+Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, keyboard hourly slider, actual deterministic run, table and exports, console errors, existing relevant tests.

@@ -1,0 +1,60 @@
+{
+  "verified_at_utc": "2026-09-23T09:35:18.928720+00:00",
+  "status": "PASS",
+  "unit_tests": {
+    "command": "MPLCONFIGDIR=\"$PWD/.mpl-cache\" .venv/bin/python -m unittest discover -s tests -v",
+    "passed": 29,
+    "failed": 0,
+    "duration_seconds": 1.549
+  },
+  "hourly_rows": 50784,
+  "complete_hourly_rows": 48452,
+  "weather_rows": 3072,
+  "weather_runs": 32,
+  "weather_complete_48_hours_each_site_each_run": true,
+  "minimum_publication_margin_minutes": 117.63333333333334,
+  "prediction_rows": 9216,
+  "metric_rows": 18,
+  "max_metric_recalculation_difference": 1.3877787807814457e-16,
+  "all_models_have_identical_score_cases": true,
+  "demo_rows": 48,
+  "demo_power_bounds": [
+    0.0078857550948515,
+    0.7288028422277494
+  ],
+  "february_actual_targets": 0,
+  "timezone_confirmed": true,
+  "raw_sources": {
+    "1": {
+      "sha256": "c4c341582fb2dd348b7187f0128cff265fe055f469413871ebb5db50eef58b5b",
+      "unchanged": true
+    },
+    "2": {
+      "sha256": "820578cd18bb557cd30c2e102f3ae5a386dfc6c489a5a15743339c2b017305e5",
+      "unchanged": true
+    }
+  },
+  "sha256": {
+    "scripts/prepare_hourly.py": "567914df1ea9fdc0f361291535273d626c8a7d320387ccc4e06dcf2a9b5e81f6",
+    "scripts/fetch_noaa.py": "93577e114b06dd99bc0af2de5bee3510f09393ac32c6373a28d9f56af8b3af16",
+    "scripts/evaluate_baseline.py": "a0e6bdcdcc0927b751f54d9dbc4b07180592d9a32dbf601798ba1a6e550ad8dd",
+    "requirements.txt": "6b7f6cdfe4128d736990529cd31b9bba3b3875f65b4e5914ae2f2929beadd3a6",
+    "data/processed/hourly.csv": "db0ce4485e861c01031ea4e8dab1c6f11528c5c2d7c302a8ba832a14407bb2eb",
+    "data/weather/noaa_forecasts.csv": "ebca055594d2370e760b0b114ed78c7a26659a555e46cf7cc7bbc304382b29e6",
+    "outputs/baseline/predictions.csv": "90d3f5e144aa4134ce6dac4b3dc81a024d820d3611efcd314d8f81d758415374",
+    "outputs/baseline/metrics.csv": "8b05923d1c782816cd576fe2e8e13d31a8712cefd0fc219c0268b3e71708609e",
+    "outputs/baseline/forecast_48h_utc.csv": "bad86eaafdbc06c6d3f7d35130f5c35c4f927b22ed68a162990caab9054a33d7",
+    "outputs/baseline/empirical_curves.json": "204ed64bc6d9fa64157d2256888ae687070ec6f9d0d554829fd4d8827c29541c",
+    "outputs/baseline/catboost_1.cbm": "e2d3c8396ca2bb1b9019675cd4dacde3e302e2972c1794941f357e1bf92d6f5a",
+    "outputs/baseline/catboost_2.cbm": "f7255e2367000e395ed1c227ff7d0f22908804acc604c4c23e8dac456c68d617",
+    "data/processed/hourly_summary.json": "c80f2497b65886d3e785195515665d741d4f5baf88891108f53d2a77f35bbfe2",
+    "outputs/baseline/forecast_48h_local.csv": "07b5eacef631ba7b6e58d7e4ef12cbf2d111f7454b52997667ea771bb72704c1"
+  },
+  "source_utc_offset_hours": 5,
+  "timezone_confirmation_source": "user: время +5",
+  "metric_values_match_previous_utc5": true,
+  "utc_forecasts_unchanged": true,
+  "local_forecast_first": "2026-02-01 00:00:00+05:00",
+  "local_forecast_last": "2026-02-02 23:00:00+05:00",
+  "initial_sensitivity_audit": "outputs/timezone_sensitivity/verification.json"
+}

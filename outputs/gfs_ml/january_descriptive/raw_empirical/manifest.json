@@ -1,0 +1,50 @@
+{
+  "artifacts": {
+    "curves": {
+      "file": "curves.json",
+      "sha256": "c8e822d8401f95048c289dcb8d6769ec54fdae5f50857b2658eaf963bd792f01"
+    }
+  },
+  "candidate": "raw_empirical",
+  "feature_names": [
+    "wind_speed_100m_ms",
+    "temperature_2m_c",
+    "wind_direction_sin",
+    "wind_direction_cos",
+    "lead_hours",
+    "local_hour_sin",
+    "local_hour_cos"
+  ],
+  "implementation_version": "gfs-ml-v1",
+  "metadata": {
+    "catboost_parameters": null,
+    "id": "raw_empirical",
+    "label": "Эмпирическая кривая без коррекции GFS",
+    "labels_end_strictly_before_utc": "2025-12-31T18:00:00+00:00",
+    "timezone": "UTC+5",
+    "training": {
+      "1": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 2872,
+        "last_pair_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_target_local": "2025-12-30T23:00:00+05:00",
+        "station_curve_rows": 22899,
+        "unique_target_hours": 1436
+      },
+      "2": {
+        "first_target_local": "2025-11-01T00:00:00+05:00",
+        "forecast_training_cases": 2860,
+        "last_pair_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_station_label_end_utc": "2025-12-30T19:00:00+00:00",
+        "last_target_local": "2025-12-30T23:00:00+05:00",
+        "station_curve_rows": 24017,
+        "unique_target_hours": 1430
+      }
+    },
+    "training_cutoff": "2025-12-31T00:00:00+05:00",
+    "training_cutoff_exclusive": true,
+    "training_cutoff_semantics": "target interval start"
+  },
+  "schema_version": 1
+}
