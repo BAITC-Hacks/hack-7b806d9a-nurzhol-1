@@ -1,3 +1,9 @@
+# hack-7b806d9a-nurzhol-1
+Hackathon team repository for Nurzhol 1
+гей тим олвэйс вин
+
+---
+
 # Hackathon AI Multi-Agent Playbook
 
 Welcome to your structured Hackathon Multi-Agent workflow suite. This framework decomposes an end-to-end hackathon project into clear, modular prompts designed for a 3-person team using modern AI tools (Claude Code, Cursor, ChatGPT, etc.).
