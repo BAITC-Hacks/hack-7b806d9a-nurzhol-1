@@ -92,9 +92,8 @@
   function setBusy(busy) {
     state.busy = busy;
     $("issue-date").disabled = busy || !$("issue-date").value;
-    $("run-mode").disabled = busy;
-    $("refresh-weather").disabled = busy;
-    $("run-button").disabled = busy || !state.status || !$("issue-date").value;
+    $("refresh-weather").disabled = busy || !state.status?.openai_configured;
+    $("run-button").disabled = busy || !state.status?.openai_configured || !$("issue-date").value;
     $("run-button").querySelector("span").textContent = busy ? "Идёт расчёт…" : "Рассчитать прогноз";
     $("download-button").disabled = busy || !state.forecast;
     updateIssueNavigation();
@@ -128,14 +127,6 @@
     state.hour = 0;
   }
 
-  function modeHelp() {
-    if ($("run-mode").value === "openai") {
-      setText("mode-help", "Агент OpenAI вызывает инструменты и объясняет результат. Числа вычисляет фиксированная модель.");
-    } else {
-      setText("mode-help", state.status?.openai_configured ? "Воспроизводимый расчёт по фиксированной модели без вызова OpenAI." : "Воспроизводимый расчёт по модели. OpenAI недоступен: API-ключ не настроен на сервере.");
-    }
-  }
-
   function applyStatus(status) {
     state.status = status;
     const dates = (status.available_issues || []).map((entry) => typeof entry === "string" ? entry : entry.issue_date).filter(Boolean).sort();
@@ -156,10 +147,9 @@
     } else {
       $("issue-date").value = dates.includes(selected) ? selected : dates.includes(status.default_issue_date) ? status.default_issue_date : dates[0];
     }
-    $("openai-option").disabled = !status.openai_configured;
-    $("openai-option").textContent = status.openai_configured ? "Агент OpenAI" : "Агент OpenAI · нет API-ключа";
-    if (!status.openai_configured) $("run-mode").value = "deterministic";
-    modeHelp();
+    setText("run-help", status.openai_configured
+      ? "Расчёт с AI-анализом: модель прогнозирует мощность, OpenAI объясняет результат."
+      : "AI-анализ недоступен: API-ключ OpenAI не настроен на сервере. Просмотр и скачивание архивных прогнозов доступны.");
     const data = status.data_status || {};
     const available = data.available_issue_count ?? dates.length;
     const expected = data.expected_issue_count ?? 29;
@@ -533,7 +523,7 @@
       }
       renderEvents(job.events);
       if (job.explanation) {
-        setText("explanation-label", job.mode === "openai" ? "Объяснение агента OpenAI" : "Результат расчёта по модели");
+        setText("explanation-label", "AI-анализ прогноза");
         setText("explanation-text", job.explanation);
         $("explanation").hidden = false;
       }
@@ -543,7 +533,7 @@
           if (job.result) await applyForecast(job.result);
           else await loadForecast();
           jobStatus("complete", "Расчёт завершён");
-          setText("agent-intro", job.mode === "openai" ? "Реальные вызовы агента OpenAI. Журнал событий — UTC+5." : "Воспроизводимый расчёт без OpenAI. Журнал событий — UTC+5.");
+          setText("agent-intro", "Агент OpenAI завершил расчёт и анализ прогноза. Журнал событий — UTC+5.");
           announce("Расчёт завершён. Прогноз обновлён.");
         } catch (error) { showError(error.message, loadForecast); }
         state.job = null;
@@ -563,18 +553,17 @@
   }
 
   async function runForecast() {
-    if (state.busy || !$("issue-date").value) return;
+    if (state.busy || !state.status?.openai_configured || !$("issue-date").value) return;
     state.request++;
-    const mode = $("run-mode").value;
     clearError();
     setBusy(true);
     renderEvents();
     $("explanation").hidden = true;
     jobStatus("running", "Выполняется");
-    setText("agent-intro", mode === "openai" ? "Агент OpenAI проверяет погоду, вызывает модель и анализирует результат. Журнал — UTC+5." : "Проверяем происхождение погоды и рассчитываем прогноз по фиксированной модели. Журнал — UTC+5.");
+    setText("agent-intro", "Агент OpenAI проверяет погоду, вызывает модель и анализирует результат. Журнал — UTC+5.");
     announce("Расчёт запущен.");
     try {
-      const job = await request("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issue_date: $("issue-date").value, mode, refresh: $("refresh-weather").checked }) });
+      const job = await request("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issue_date: $("issue-date").value, mode: "openai", refresh: $("refresh-weather").checked }) });
       if (!job.job_id) throw new Error("Сервер не вернул идентификатор расчёта. Повторите запуск.");
       state.job = job.job_id;
       await pollJob(job.job_id);
@@ -647,7 +636,6 @@
     select.selectedIndex++;
     changeIssue();
   });
-  $("run-mode").addEventListener("change", modeHelp);
   $("run-button").addEventListener("click", runForecast);
   $("retry-button").addEventListener("click", () => state.retry?.());
   $("download-button").addEventListener("click", () => download(`/api/download?issue_date=${encodeURIComponent($("issue-date").value)}`, `windops_${$("issue-date").value}_48h.csv`, $("download-button")));

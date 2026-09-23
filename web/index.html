@@ -24,11 +24,10 @@
         <section class="control-panel" aria-label="Управление прогнозом">
           <div class="run-toolbar">
             <div class="field issue-field"><label for="issue-date">Выпуск прогноза · 23:00 UTC+5</label><div class="date-control"><button id="prev-issue" class="date-arrow" aria-label="Предыдущий выпуск" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg></button><select id="issue-date" disabled><option>Загрузка дат…</option></select><button id="next-issue" class="date-arrow" aria-label="Следующий выпуск" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5"/></svg></button></div></div>
-            <div class="field mode-field"><label for="run-mode">Способ расчёта</label><select id="run-mode" aria-describedby="mode-help"><option value="deterministic">Расчёт по модели</option><option value="openai" id="openai-option" disabled>Агент OpenAI · проверяем</option></select></div>
-            <button class="primary-button" id="run-button" disabled><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m7 4 7 6-7 6V4Z" fill="currentColor"/></svg><span>Рассчитать прогноз</span></button>
+            <button class="primary-button" id="run-button" aria-describedby="run-help" disabled><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m7 4 7 6-7 6V4Z" fill="currentColor"/></svg><span>Рассчитать прогноз</span></button>
             <button class="secondary-button" id="download-button" disabled title="Полный прогноз на 48 часов для обеих турбин"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m-3-3 3 3 3-3M4 13v3h12v-3"/></svg>CSV · 48 ч · 2 турбины</button>
           </div>
-          <div class="toolbar-caption"><p id="mode-help">Выберите способ расчёта прогноза.</p><label class="refresh-option"><input type="checkbox" id="refresh-weather"> Обновить погоду NOAA</label></div>
+          <div class="toolbar-caption"><p id="run-help">Расчёт с AI-анализом · проверяем доступность OpenAI…</p><label class="refresh-option"><input type="checkbox" id="refresh-weather"> Обновить погоду NOAA</label></div>
         </section>
         <div class="alert" id="error-banner" role="alert" hidden><span id="error-message"></span><button id="retry-button" class="text-button">Повторить загрузку</button></div>
 

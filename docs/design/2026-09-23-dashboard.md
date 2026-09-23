@@ -8,6 +8,8 @@ Layout: compact brand header with the archive period; full-width forecast worksp
 
 Signature: a two-turbine trajectory with a synchronized hourly inspector. This is real forecast data, not decorative wind art. The 24/48 hour toggle, date arrows and comparison mode alter actual data views. Downloads remain explicitly full 48 hours for both turbines.
 
+The site has one calculation action: the numerical model forecasts power and OpenAI orchestrates the tools and explains the result. Without an API key, the run action is disabled with an explanation; archive viewing and exports remain available.
+
 Quiet surrounding chrome; no decorative KPI metrics, pretend notifications or fabricated agent activity. Preserve all current model, time, source verification and error handling. The prepared model remains unchanged.
 
 Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, hourly values selected on the chart, keyboard-accessible table, actual deterministic run, table and exports, console errors, existing relevant tests.

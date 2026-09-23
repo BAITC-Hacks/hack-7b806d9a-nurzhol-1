@@ -226,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
             if mode not in ('deterministic','openai') or not isinstance(refresh,bool):
                 raise ValueError('Неверный режим или параметр обновления.')
             if mode=='openai' and not load_settings(self.server.app.root)['OPENAI_API_KEY']:
-                raise ValueError('Добавьте OPENAI_API_KEY в .env или выберите локальный режим.')
+                raise ValueError('Добавьте OPENAI_API_KEY в .env на сервере и обновите страницу.')
             identifier = self.server.app.start(issue,mode,refresh)
             self.send_json({'job_id':identifier},202)
         except (ValueError,TypeError,json.JSONDecodeError) as error:

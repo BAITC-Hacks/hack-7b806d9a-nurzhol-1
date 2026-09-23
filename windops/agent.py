@@ -35,7 +35,7 @@ def load_settings(root):
 class OpenAIClient:
     def __init__(self, api_key, model):
         if not api_key:
-            raise AgentError('Добавьте OPENAI_API_KEY в .env или выберите локальный режим.')
+            raise AgentError('Добавьте OPENAI_API_KEY в .env или окружение сервера и повторите расчёт.')
         if any(ord(char)<33 or ord(char)>126 for char in api_key):
             raise AgentError('Неверный формат OPENAI_API_KEY: удалите пробелы и переносы строк.')
         self._api_key = api_key
@@ -55,11 +55,11 @@ class OpenAIClient:
         except HTTPError as error:
             hints = {401:'Проверьте API-ключ.', 403:'Нет доступа к выбранной модели.',
                      404:'Проверьте OPENAI_MODEL.', 429:'Проверьте API-баланс и лимиты.'}
-            raise AgentError(f'OpenAI HTTP {error.code}. {hints.get(error.code,"Повторите запрос позже.")} Локальный расчёт доступен.') from None
+            raise AgentError(f'OpenAI HTTP {error.code}. {hints.get(error.code,"Повторите запрос позже.")}') from None
         except (URLError, TimeoutError, OSError, ValueError):
-            raise AgentError('Не удалось получить ответ OpenAI. Проверьте соединение или выберите локальный режим.') from None
+            raise AgentError('Не удалось получить ответ OpenAI. Проверьте соединение и повторите расчёт.') from None
         if result.get('error') or result.get('status') in ('failed','cancelled','incomplete'):
-            raise AgentError('OpenAI не завершил запрос. Локальный расчёт доступен.')
+            raise AgentError('OpenAI не завершил запрос. Повторите расчёт.')
         return result
 
 
@@ -202,7 +202,7 @@ class AgentRunner:
                 for item in requested:
                     calls += 1
                     if calls>10:
-                        raise AgentError('Достигнут лимит вызовов агента. Используйте локальный расчёт.')
+                        raise AgentError('Достигнут лимит вызовов агента. Повторите расчёт.')
                     try:
                         arguments = json.loads(item.get('arguments','{}'))
                         result = self.execute(item.get('name',''),arguments)
@@ -218,4 +218,4 @@ class AgentRunner:
                 return {'forecast':self.forecast,'explanation':text,'analysis':self.analysis,
                         'mode':mode,'usage':usage,'agent_model':client.model}
             inputs.append({'role':'user','content':'Полный цикл ещё не завершён. Вызови недостающие инструменты перед итоговым ответом.'})
-        raise AgentError('Агент не завершил полный цикл за 8 шагов. Локальный расчёт доступен.')
+        raise AgentError('Агент не завершил полный цикл за 8 шагов. Повторите расчёт.')
