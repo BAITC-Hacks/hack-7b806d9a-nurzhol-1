@@ -456,6 +456,9 @@ def run_experiment(hourly, november_december_weather, january_weather, output_di
     if (output_dir / "active.json").exists():
         raise ValueError("An active deployment exists in this output directory; "
                          "choose a new --output-dir to preserve the reviewed model")
+    if any((output_dir / name).exists() for name in ("decision.json", "deployment", "experiment.json")):
+        raise ValueError("Experiment results already exist in this output directory; "
+                         "choose a new --output-dir to preserve the decision and model")
     # Validate both entire archives before writing any selection result.
     pre_weather = require_archive(november_december_weather, "2025-10-30", "2025-12-30")
     jan_weather = require_archive(january_weather, "2025-12-31", "2026-01-31")

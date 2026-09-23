@@ -18,9 +18,11 @@ from windops.forecast import ForecastService, ISSUE_DATES
 
 
 class DemoApp:
-    def __init__(self, root, service=None):
+    def __init__(self, root, service=None, *, inline=False, persist_jobs=True):
         self.root = Path(root).resolve()
         self.service = service or ForecastService(self.root)
+        self.inline = inline
+        self.persist_jobs = persist_jobs
         self.jobs = {}
         self.lock = threading.RLock()
         self.ask_lock = threading.Lock()
@@ -85,6 +87,8 @@ class DemoApp:
         with self.lock:
             if not valid_job_id(job.get('job_id')):
                 raise ValueError('Неверный идентификатор расчёта.')
+            if not self.persist_jobs:
+                return
             directory = self.root/'outputs/demo/jobs'
             directory.mkdir(parents=True,exist_ok=True)
             target = directory/(job['job_id']+'.json')
@@ -97,6 +101,8 @@ class DemoApp:
             return None
         with self.lock:
             live = identifier in self.jobs
+            if not live and not self.persist_jobs:
+                return None
             path = self.root/'outputs/demo/jobs'/f'{identifier}.json'
             try:
                 job = deepcopy(self.jobs[identifier]) if live else json.loads(path.read_text())
@@ -130,7 +136,9 @@ class DemoApp:
     def list_jobs(self):
         with self.lock:
             directory = self.root/'outputs/demo/jobs'
-            identifiers = set(self.jobs) | {path.stem for path in directory.glob('*.json')}
+            identifiers = set(self.jobs)
+            if self.persist_jobs:
+                identifiers |= {path.stem for path in directory.glob('*.json')}
             jobs = [job for identifier in identifiers if (job := self.get_job(identifier)) is not None]
         jobs.sort(key=lambda job:(job['created_at'],job['job_id']),reverse=True)
         fields = ('job_id','status','issue_date','mode','created_at','finished_at','refresh','agent_model','error')
@@ -148,8 +156,8 @@ class DemoApp:
             job = {'job_id':identifier,'status':'running','events':[], 'result':None,
                    'explanation':'','error':None,'mode':mode,'issue_date':issue_date,'usage':None,
                    'created_at':datetime.now(timezone.utc).isoformat(),'finished_at':None,'refresh':refresh}
-            self.jobs[identifier] = job
             self.save(job)
+            self.jobs[identifier] = job
 
         def event(value):
             with self.lock:
@@ -169,7 +177,16 @@ class DemoApp:
                 with self.lock:
                     job.update(status='failed',error=str(error),finished_at=datetime.now(timezone.utc).isoformat())
                     self.save(job)
-        threading.Thread(target=work,name='forecast-'+identifier[:8],daemon=True).start()
+        try:
+            if self.inline:
+                work()
+            else:
+                threading.Thread(target=work,name='forecast-'+identifier[:8],daemon=True).start()
+        except Exception as error:
+            with self.lock:
+                job.update(status='failed',error=str(error),finished_at=datetime.now(timezone.utc).isoformat())
+                self.save(job)
+            raise
         return identifier
 
 
@@ -241,6 +258,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def allowed_host(self):
         return self.headers.get('Host','') in (f'127.0.0.1:{self.server.server_port}',f'localhost:{self.server.server_port}')
+
+    def allowed_origin(self):
+        origin = self.headers.get('Origin')
+        return not origin or origin in (f'http://127.0.0.1:{self.server.server_port}',
+                                        f'http://localhost:{self.server.server_port}')
 
     def do_GET(self):
         if not self.allowed_host():
@@ -317,8 +339,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed_host():
             self.send_json({'error':'Этот сервер доступен только через localhost.'},403)
             return
-        origin = self.headers.get('Origin')
-        if origin and origin not in (f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'):
+        if not self.allowed_origin():
             self.send_json({'error':'Запрос с другого сайта запрещён.'},403)
             return
         path = urlsplit(self.path).path
@@ -330,7 +351,8 @@ class Handler(BaseHTTPRequestHandler):
             if not 0<length<=8192:
                 raise ValueError('Неверный размер запроса.')
             data = json.loads(self.rfile.read(length))
-            fields = {'issue_date','mode','refresh'} if path=='/api/run' else {'issue_date','question','job_id'}
+            fields = ({'issue_date','mode','refresh'} if path=='/api/run' else
+                      {'issue_date','question','job_id','source_fingerprint','model_version'})
             if not isinstance(data,dict) or set(data).difference(fields):
                 raise ValueError('Неверные параметры запроса.')
             issue = parse_issue(data.get('issue_date'))
@@ -340,6 +362,14 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(question,str) or not question.strip() or len(question)>1000:
                     raise ValueError('Введите вопрос длиной от 1 до 1000 символов.')
                 forecast = None
+                if 'source_fingerprint' in data or 'model_version' in data:
+                    if ('job_id' in data or not isinstance(data.get('source_fingerprint'),str)
+                            or not isinstance(data.get('model_version'),str)):
+                        raise ValueError('Неверные параметры сохранённого прогноза.')
+                    forecast = app.service.get_forecast(issue)
+                    if (forecast.get('source',{}).get('fingerprint') != data['source_fingerprint']
+                            or forecast.get('model',{}).get('version') != data['model_version']):
+                        raise RuntimeError('Архив или модель изменились. Откройте текущий прогноз перед вопросом агенту.')
                 if 'job_id' in data:
                     if not isinstance(data['job_id'],str):
                         raise ValueError('Неверный идентификатор расчёта.')
@@ -368,7 +398,10 @@ class Handler(BaseHTTPRequestHandler):
             if mode=='openai' and not load_settings(self.server.app.root)['OPENAI_API_KEY']:
                 raise ValueError('Добавьте OPENAI_API_KEY в .env на сервере и обновите страницу.')
             identifier = self.server.app.start(issue,mode,refresh)
-            self.send_json({'job_id':identifier},202)
+            if app.inline:
+                self.send_json({'job_id':identifier,'job':app.get_job(identifier)})
+            else:
+                self.send_json({'job_id':identifier},202)
         except (ValueError,TypeError,json.JSONDecodeError) as error:
             self.send_json({'error':str(error)},400)
         except RuntimeError as error:

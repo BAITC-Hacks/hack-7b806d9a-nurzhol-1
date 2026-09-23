@@ -177,6 +177,40 @@ class PromotionGateTests(unittest.TestCase):
 
 
 class ExperimentCommandTests(unittest.TestCase):
+    def test_failed_rerun_cannot_replace_the_decision_for_an_existing_deployment(self):
+        hourly = hourly_fixture()
+        pre = weather_fixture(pd.date_range("2025-10-30", "2025-12-30").strftime("%Y-%m-%d"))
+        january = weather_fixture(pd.date_range("2025-12-31", "2026-01-31").strftime("%Y-%m-%d"))
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "initial"
+            summary = run_experiment(hourly, pre, january, output)
+            self.assertTrue(summary["gate_passed"])
+            manifest = output / "deployment/manifest.json"
+            original = ForecastModelBundle.load(manifest)
+            before = {path.relative_to(output): path.read_bytes()
+                      for path in output.rglob("*") if path.is_file()}
+
+            # Exact weather and bin-center labels give the raw baseline zero error,
+            # so no candidate can pass the promotion gate on a new experiment.
+            exact_hourly = hourly.copy()
+            exact_hourly["wind_speed_ms"] = .25 + exact_hourly.time_naive.dt.hour / 2
+            exact_hourly["power_normalized"] = exact_hourly.wind_speed_ms / 16 / exact_hourly.turbine_id
+            exact_pre = pre.assign(wind_speed_100m_ms=pre.wind_speed_100m_ms * 4 + .25)
+            exact_january = january.assign(wind_speed_100m_ms=january.wind_speed_100m_ms * 4 + .25)
+            with self.assertRaisesRegex(ValueError, "--output-dir"):
+                run_experiment(exact_hourly, exact_pre, exact_january, output)
+
+            self.assertEqual({path.relative_to(output): path.read_bytes()
+                              for path in output.rglob("*") if path.is_file()}, before)
+            preserved = ForecastModelBundle.load(manifest)
+            np.testing.assert_array_equal(preserved.predict(january), original.predict(january))
+            self.assertEqual(preserved.metadata["decision_sha256"],
+                             hashlib.sha256((output / "decision.json").read_bytes()).hexdigest())
+            new_output = Path(directory) / "rerun"
+            rerun = run_experiment(exact_hourly, exact_pre, exact_january, new_output)
+            self.assertFalse(rerun["gate_passed"])
+            self.assertFalse((new_output / "deployment").exists())
+
     def test_reexperiment_cannot_overwrite_an_active_deployment(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)

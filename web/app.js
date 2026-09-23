@@ -4,6 +4,9 @@
   const $ = (id) => document.getElementById(id);
   const state = { status: null, forecast: null, turbine: "both", metric: "power", horizon: 48, hour: 0, busy: false, job: null, request: 0, retry: null, snapshot: null, forecastJobId: null, asking: false, questionVersion: 0 };
   const analytics = { tab: "comparison", comparison: null, validation: null, comparisonRequest: 0, validationRequest: 0, historyRequest: 0 };
+  const browserHistory = { jobs: null, persistent: true };
+  const HISTORY_KEY = "windops.jobs.v1";
+  const usesBrowserHistory = () => state.status?.history_storage === "browser";
   const HOUR = 3600000;
   const NS = "http://www.w3.org/2000/svg";
   const number = (value, digits = 3) => Number.isFinite(Number(value)) && value !== null && value !== "" ? Number(value).toLocaleString("ru-RU", { minimumFractionDigits: digits, maximumFractionDigits: digits }) : "—";
@@ -93,12 +96,12 @@
 
   function setBusy(busy) {
     state.busy = busy;
-    $("issue-date").disabled = busy || !$("issue-date").value;
-    $("refresh-weather").disabled = busy || !state.status?.openai_configured;
+    $("issue-date").disabled = busy || !Array.from($("issue-date").options).some((option) => option.value);
+    $("refresh-weather").disabled = busy || !state.status?.openai_configured || state.status?.weather_refresh_available === false;
     $("run-button").disabled = busy || !state.status?.openai_configured || !$("issue-date").value;
     $("run-button").querySelector("span").textContent = busy ? "Идёт расчёт…" : "Рассчитать прогноз";
     $("download-button").disabled = busy || !state.forecast;
-    $("snapshot-current").disabled = busy;
+    $("snapshot-current").disabled = busy || !$("issue-date").value;
     document.querySelectorAll("[data-open-job]").forEach((button) => { button.disabled = busy; });
     updateQuestionControls();
     updateIssueNavigation();
@@ -154,9 +157,16 @@
     } else {
       $("issue-date").value = dates.includes(selected) ? selected : dates.includes(status.default_issue_date) ? status.default_issue_date : dates[0];
     }
+    setText("run-options-label", status.openai_configured ? "Параметры расчёта" : "AI-анализ недоступен · подробности");
     setText("run-help", status.openai_configured
       ? "Расчёт с AI-анализом: модель прогнозирует мощность, OpenAI объясняет результат."
       : "AI-анализ недоступен: API-ключ OpenAI не настроен на сервере. Просмотр и скачивание архивных прогнозов доступны.");
+    const refreshAvailable = status.weather_refresh_available !== false;
+    if (!refreshAvailable) $("refresh-weather").checked = false;
+    $("refresh-weather").title = refreshAvailable ? "Обновить архив погоды NOAA перед расчётом" : "В облачной версии используется подготовленный архив NOAA. Обновление погоды недоступно.";
+    $("refresh-weather").setAttribute("aria-label", refreshAvailable ? "Обновить погоду NOAA" : "Обновить погоду NOAA — недоступно в облачной версии, используется архив");
+    const refreshLabel = $("refresh-weather").closest("label");
+    if (refreshLabel) refreshLabel.title = $("refresh-weather").title;
     const data = status.data_status || {};
     const available = data.available_issue_count ?? dates.length;
     const expected = data.expected_issue_count ?? 29;
@@ -285,11 +295,12 @@
     if (rows.length) {
       const first = parts(rowTime(rows[0]));
       const last = parts(rowTime(rows.at(-1)));
-      setText("forecast-range", `${first.day}.${first.month}.${first.year} ${first.hour}:00 — ${last.day}.${last.month}.${last.year} ${last.hour}:00 · UTC+5`);
+      setText("forecast-range", `${first.day}.${first.month} ${first.hour}:00 — ${last.day}.${last.month} ${last.hour}:00 · UTC+5`);
+      $("forecast-range").title = `${first.day}.${first.month}.${first.year} ${first.hour}:00 — ${last.day}.${last.month}.${last.year} ${last.hour}:00 · UTC+5`;
       const spillover = rows.some((row) => row.is_february_target === false);
       setText("chart-end-note", spillover ? `Показаны часы марта · горизонт ${state.horizon} ч` : "Почасовой прогноз · фактических данных февраля нет");
     }
-    setText("kpi-context", both ? `Т1 / Т2 · первые ${state.horizon} ч · значения по каждой турбине` : `Турбина ${state.turbine} · первые ${state.horizon} ч`);
+    setText("kpi-context", both ? `Обе турбины · ${state.horizon} часов` : `Турбина ${state.turbine} · ${state.horizon} часов`);
     renderTurbineValues("kpi-power", series, (item) => mean(item.rows, "power_normalized"));
     renderTurbineValues("kpi-peak", series, (item) => peak(item.rows));
     renderTurbineValues("kpi-wind", series, (item) => mean(item.rows, "wind_speed_ms"), 1);
@@ -363,7 +374,7 @@
     const height = Math.max(220, container.clientHeight);
     const compact = width < 650;
     const power = state.metric === "power";
-    const padding = { left: compact ? 40 : 48, right: 16, top: 56, bottom: power ? 72 : 40 };
+    const padding = { left: 48, right: 16, top: 56, bottom: power ? 72 : 40 };
     const plotWidth = width - padding.left - padding.right;
     const plotHeight = height - padding.top - padding.bottom;
     const key = power ? "power_normalized" : "wind_speed_ms";
@@ -391,7 +402,7 @@
       chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), stroke: gridColor, "stroke-width": 1, ...(step === 0 ? { class: "chart-baseline" } : {}) }));
       chart.append(svgNode("text", { x: padding.left - 8, y: y(value) + 4, "text-anchor": "end", class: "chart-tick" }, number(value, power ? 2 : 0)));
     }
-    const tickStep = state.horizon / (compact ? 4 : 8);
+    const tickStep = state.horizon / (plotWidth < 270 ? 2 : compact ? 4 : 8);
     for (let hour = 0; hour <= state.horizon; hour += tickStep) {
       const p = parts(time0 + hour * HOUR);
       chart.append(svgNode("line", { x1: x(hour), x2: x(hour), y1: y(0), y2: y(0) + 4, stroke: gridColor, "stroke-width": 1 }));
@@ -410,7 +421,7 @@
       chart.append(svgNode("path", { d: path, fill: "none", stroke: item.color, "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round", ...(item.turbine === 2 ? { "stroke-dasharray": "6 4" } : {}) }));
     });
     if (power) series.forEach((item, index) => {
-      const laneY = y(0) + 44 + index * 12;
+      const laneY = y(0) + 44 + index * 16;
       chart.append(svgNode("text", { x: padding.left - 8, y: laneY + 4, "text-anchor": "end", class: "chart-tick" }, `Т${item.turbine}`));
       chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: laneY, y2: laneY, stroke: gridColor }));
       visibleForecastEvents().filter((event) => event.turbine_id === item.turbine).forEach((event) => {
@@ -573,8 +584,12 @@
     if (!question || state.asking || state.busy || !state.forecast || !state.status?.openai_configured) return;
     const version = ++state.questionVersion;
     const body = { issue_date: state.forecast.issue_date, question };
-    if (state.forecastJobId) body.job_id = state.forecastJobId;
+    if (usesBrowserHistory()) {
+      body.source_fingerprint = state.forecast.source?.fingerprint || "";
+      body.model_version = state.forecast.model?.version || "";
+    } else if (state.forecastJobId) body.job_id = state.forecastJobId;
     state.asking = true;
+    document.querySelector(".question-examples").open = false;
     updateQuestionControls();
     $("question-error").hidden = true;
     $("answer-panel").hidden = true;
@@ -586,7 +601,9 @@
       const labels = { get_selected_forecast: "выбранный прогноз", compare_previous_issue: "сравнение выпусков", get_forecast_events: "события прогноза" };
       setText("answer-sources", `Использованы: ${[...new Set(result.tools || [])].map((tool) => labels[tool] || tool).join(", ")}.`);
       $("answer-panel").hidden = false;
-      setText("question-status", "Ответ готов. Численные данные получены из инструментов.");
+      $("answer-panel").scrollTop = 0;
+      setText("question-status", "");
+      announce("Ответ агента готов. Численные данные получены из инструментов.");
     } catch (error) {
       if (version !== state.questionVersion) return;
       setText("question-error", error.message);
@@ -752,12 +769,36 @@
     setText("validation-caveat", data.caveat);
   }
 
+  function browserJobs() {
+    if (browserHistory.jobs === null) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        browserHistory.jobs = Array.isArray(saved) ? saved.filter((job) => job && typeof job.job_id === "string").slice(0, 20) : [];
+      } catch {
+        browserHistory.jobs = [];
+        browserHistory.persistent = false;
+      }
+    }
+    return browserHistory.jobs;
+  }
+
+  function saveBrowserJob(job) {
+    browserHistory.jobs = [job, ...browserJobs().filter((entry) => entry.job_id !== job.job_id)].slice(0, 20);
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(browserHistory.jobs));
+      browserHistory.persistent = true;
+    } catch {
+      // Keep full results in memory if storage is blocked or its quota is full.
+      browserHistory.persistent = false;
+    }
+  }
+
   async function loadHistory() {
     const token = ++analytics.historyRequest;
     setText("history-status", "Загружаем сохранённые расчёты…");
     $("history-status").classList.remove("is-error");
     try {
-      const result = await request("/api/jobs");
+      const result = usesBrowserHistory() ? { jobs: browserJobs().map((job) => ({ ...job, has_result: !!job.result?.rows?.length })) } : await request("/api/jobs");
       if (token !== analytics.historyRequest) return;
       const labels = { complete: "Готов", running: "Выполняется", failed: "Ошибка", interrupted: "Прерван" };
       $("history-list").replaceChildren(...result.jobs.map((job) => {
@@ -775,7 +816,12 @@
         }
         return item;
       }));
-      setText("history-status", result.jobs.length ? `Показано расчётов: ${result.jobs.length}. История доступна после перезапуска сервера.` : "Расчётов пока нет. Запустите прогноз — результат появится здесь.");
+      const historyNote = usesBrowserHistory()
+        ? browserHistory.persistent
+          ? "До 20 последних расчётов хранятся только в этом браузере. Очистка данных сайта удалит историю."
+          : "Хранилище браузера недоступно или заполнено. История текущей страницы доступна только до её закрытия или перезагрузки; скачайте CSV."
+        : "История доступна после перезапуска сервера.";
+      setText("history-status", `${result.jobs.length ? `Показано расчётов: ${result.jobs.length}.` : "Расчётов пока нет. Запустите прогноз — результат появится здесь."} ${historyNote}`);
     } catch (error) {
       if (token !== analytics.historyRequest) return;
       $("history-list").replaceChildren();
@@ -789,12 +835,14 @@
     setBusy(true);
     ++state.request;
     try {
-      const job = await request(`/api/jobs/${encodeURIComponent(id)}`);
-      if (job.status !== "complete" || !job.result) throw new Error("У этого расчёта нет сохранённого результата.");
+      const job = usesBrowserHistory() ? browserJobs().find((entry) => entry.job_id === id) : await request(`/api/jobs/${encodeURIComponent(id)}`);
+      if (!job || job.status !== "complete" || !job.result) throw new Error("У этого расчёта нет сохранённого результата.");
       await applyForecast(job.result);
       state.snapshot = job;
       state.forecastJobId = job.job_id;
-      $("issue-date").value = job.issue_date;
+      if (Array.from($("issue-date").options).some((option) => option.value === job.issue_date)) {
+        $("issue-date").value = job.issue_date;
+      }
       resetQuestion();
       setText("snapshot-label", `Сохранённый расчёт от ${dateTime(job.created_at, true, true)} · выпуск ${job.issue_date}. Показаны исходные данные, версия модели и объяснение.`);
       $("snapshot-banner").hidden = false;
@@ -876,6 +924,48 @@
     if (followLatest) list.scrollTop = list.scrollHeight;
   }
 
+  async function updateJob(job) {
+    if (["complete", "failed", "interrupted"].includes(job.status) && usesBrowserHistory()) {
+      saveBrowserJob(job);
+      if (analytics.tab === "history") loadHistory();
+    }
+    renderEvents(job.events);
+    if (job.explanation) {
+      setText("explanation-label", "AI-анализ прогноза");
+      setText("explanation-text", job.explanation);
+      $("explanation").hidden = false;
+    }
+    if (job.status === "complete") {
+      try {
+        if (!usesBrowserHistory()) applyStatus(await request("/api/status"));
+        if (job.result) await applyForecast(job.result);
+        else await loadForecast();
+        state.snapshot = null;
+        state.forecastJobId = job.job_id;
+        $("snapshot-banner").hidden = true;
+        resetQuestion();
+        analytics.comparison = null;
+        if (analytics.tab === "comparison") loadComparison();
+        jobStatus("complete", "Расчёт завершён");
+        setText("agent-intro", "Агент OpenAI завершил расчёт и анализ прогноза. Журнал событий — UTC+5.");
+        announce("Расчёт завершён. Прогноз обновлён.");
+        if (analytics.tab === "history" && !usesBrowserHistory()) loadHistory();
+      } catch (error) { showError(error.message, loadForecast); }
+      state.job = null;
+      setBusy(false);
+      return true;
+    }
+    if (job.status === "failed" || job.status === "interrupted") {
+      jobStatus("failed", job.status === "interrupted" ? "Расчёт прерван" : "Ошибка расчёта");
+      setText("agent-intro", "Расчёт остановлен. Подробности сохранены в журнале инструментов.");
+      showError(typeof job.error === "string" ? job.error : job.error?.message || "Не удалось завершить расчёт. Проверьте журнал и повторите запуск.");
+      state.job = null;
+      setBusy(false);
+      return true;
+    }
+    return false;
+  }
+
   async function pollJob(jobId) {
     let failures = 0;
     while (state.job === jobId) {
@@ -891,40 +981,7 @@
         await sleep(1800);
         continue;
       }
-      renderEvents(job.events);
-      if (job.explanation) {
-        setText("explanation-label", "AI-анализ прогноза");
-        setText("explanation-text", job.explanation);
-        $("explanation").hidden = false;
-      }
-      if (job.status === "complete") {
-        try {
-          applyStatus(await request("/api/status"));
-          if (job.result) await applyForecast(job.result);
-          else await loadForecast();
-          state.snapshot = null;
-          state.forecastJobId = job.job_id;
-          $("snapshot-banner").hidden = true;
-          resetQuestion();
-          analytics.comparison = null;
-          if (analytics.tab === "comparison") loadComparison();
-          jobStatus("complete", "Расчёт завершён");
-          setText("agent-intro", "Агент OpenAI завершил расчёт и анализ прогноза. Журнал событий — UTC+5.");
-          announce("Расчёт завершён. Прогноз обновлён.");
-          if (analytics.tab === "history") loadHistory();
-        } catch (error) { showError(error.message, loadForecast); }
-        state.job = null;
-        setBusy(false);
-        return;
-      }
-      if (job.status === "failed" || job.status === "interrupted") {
-        jobStatus("failed", job.status === "interrupted" ? "Расчёт прерван" : "Ошибка расчёта");
-        setText("agent-intro", "Расчёт остановлен. Подробности сохранены в журнале инструментов.");
-        showError(typeof job.error === "string" ? job.error : job.error?.message || "Не удалось завершить расчёт. Проверьте журнал и повторите запуск.");
-        state.job = null;
-        setBusy(false);
-        return;
-      }
+      if (await updateJob(job)) return;
       await sleep(1200);
     }
   }
@@ -940,10 +997,14 @@
     setText("agent-intro", "Агент OpenAI проверяет погоду, вызывает модель и анализирует результат. Журнал — UTC+5.");
     announce("Расчёт запущен.");
     try {
-      const job = await request("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issue_date: $("issue-date").value, mode: "openai", refresh: $("refresh-weather").checked }) });
+      const inline = state.status?.execution_mode === "inline";
+      const job = await request("/api/run", { method: "POST", timeoutMs: inline ? 330000 : 45000, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issue_date: $("issue-date").value, mode: "openai", refresh: state.status?.weather_refresh_available !== false && !!$("refresh-weather").checked }) });
       if (!job.job_id) throw new Error("Сервер не вернул идентификатор расчёта. Повторите запуск.");
       state.job = job.job_id;
-      await pollJob(job.job_id);
+      if (inline) {
+        if (!job.job || !["complete", "failed", "interrupted"].includes(job.job.status)) throw new Error("Сервер не вернул завершённый расчёт. Повторите запуск.");
+        await updateJob(job.job);
+      } else await pollJob(job.job_id);
     } catch (error) {
       state.job = null;
       setBusy(false);
@@ -952,20 +1013,37 @@
     }
   }
 
+  function forecastCSV() {
+    const rows = state.forecast?.rows || [];
+    if (!rows.length) throw new Error("Нет почасовых значений для экспорта.");
+    const fields = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+    const escape = (value) => {
+      const text = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const lines = [fields.map(escape).join(","), ...rows.map((row) => fields.map((field) => escape(row[field])).join(","))];
+    return new Blob(["\uFEFF", lines.join("\r\n"), "\r\n"], { type: "text/csv;charset=utf-8" });
+  }
+
   async function download(url, filename, button) {
     if (button.disabled) return;
-    clearError();
+    if (!state.job || !state.retry) clearError();
     button.disabled = true;
     const oldLabel = button.innerHTML;
     button.textContent = "Готовим CSV…";
     try {
-      const response = await fetch(url, { headers: { Accept: "text/csv" } });
-      if (!response.ok || (response.headers.get("Content-Type") || "").includes("application/json")) {
-        let data = {};
-        try { data = await response.json(); } catch { /* Error body may not be JSON. */ }
-        throw new Error(typeof data.error === "string" ? data.error : data.error?.message || `Не удалось скачать CSV (${response.status}).`);
+      let blob;
+      if (usesBrowserHistory() && button.id === "download-button") {
+        blob = forecastCSV();
+      } else {
+        const response = await fetch(url, { headers: { Accept: "text/csv" } });
+        if (!response.ok || (response.headers.get("Content-Type") || "").includes("application/json")) {
+          let data = {};
+          try { data = await response.json(); } catch { /* Error body may not be JSON. */ }
+          throw new Error(typeof data.error === "string" ? data.error : data.error?.message || `Не удалось скачать CSV (${response.status}).`);
+        }
+        blob = await response.blob();
       }
-      const blob = await response.blob();
       const blobURL = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = blobURL;
@@ -975,7 +1053,7 @@
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(blobURL), 1000);
       announce("CSV подготовлен и передан браузеру для скачивания.");
-    } catch (error) { showError(error.message || "Не удалось скачать CSV. Проверьте соединение и повторите попытку."); }
+    } catch (error) { showError(error.message || "Не удалось скачать CSV. Проверьте соединение и повторите попытку.", state.job ? state.retry : null); }
     finally { button.innerHTML = oldLabel; button.disabled = button.id === "download-button" ? state.busy || !state.forecast : !state.status?.data_status?.february_ready; }
   }
 

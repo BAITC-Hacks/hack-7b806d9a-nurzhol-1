@@ -3,11 +3,15 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 from datetime import datetime, timedelta, timezone
+from email.parser import Parser
+from email.utils import parsedate_to_datetime
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 import threading
 import time
 import xml.etree.ElementTree as ET
@@ -73,7 +77,7 @@ def validate_grib_messages(payload):
         raise ValueError('Empty GRIB response')
 
 
-def download(url, path, byte_range=None):
+def download(url, path, byte_range=None, expected_metadata=None):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + '.part')
     headers = path.with_suffix(path.suffix + '.headers')
@@ -81,18 +85,59 @@ def download(url, path, byte_range=None):
                '--retry-delay', '1', '-D', str(headers), '-o', str(temporary), '-w', '%{http_code}']
     if byte_range:
         command += ['--range', f'{byte_range[0]}-{byte_range[1]}']
+    if expected_metadata is not None:
+        command += ['--header', 'If-Match: ' + expected_metadata['ETag']]
     result = subprocess.run(command + [url], capture_output=True, text=True, check=False)
     expected = '206' if byte_range else '200'
     if result.returncode or result.stdout.strip() != expected:
         raise RuntimeError(f'HTTP download failed ({result.stdout}): {url}: {result.stderr[-400:]}')
     content = temporary.read_bytes()
+    if byte_range or expected_metadata is not None:
+        # curl can record CONNECT, retry, and final response headers in one file.
+        # Only the final response describes the bytes that will be committed.
+        blocks = [block for block in headers.read_text().split('\n\n') if block.startswith('HTTP/')]
+        if not blocks:
+            raise ValueError('Missing HTTP response headers')
+        response = Parser().parsestr(blocks[-1].partition('\n')[2])
+    if expected_metadata is not None:
+        if response.get_all('ETag', []) != [expected_metadata['ETag']]:
+            raise ValueError('Downloaded ETag differs from the listed source identity')
+        modified = response.get_all('Last-Modified', [])
+        if len(modified) != 1:
+            raise ValueError('Missing or duplicate Last-Modified publication header')
+        try:
+            actual_modified = parsedate_to_datetime(modified[0])
+        except (TypeError, ValueError) as error:
+            raise ValueError('Invalid Last-Modified publication header') from error
+        listed_modified = datetime.fromisoformat(expected_metadata['LastModified'].replace('Z', '+00:00'))
+        # HTTP dates have second precision; S3 listings may include fractions.
+        # ETag equality binds the downloaded bytes to that exact listed object.
+        if (actual_modified.tzinfo is None
+                or actual_modified != listed_modified.replace(microsecond=0)):
+            raise ValueError('Downloaded Last-Modified differs from the listed publication time')
     if byte_range:
         start, end = byte_range
-        header = headers.read_text().lower()
-        if len(content) != end-start+1 or f'content-range: bytes {start}-{end}/' not in header:
+        if (len(content) != end-start+1
+                or not response.get('Content-Range', '').lower().startswith(f'bytes {start}-{end}/')):
             raise ValueError('Range response length or Content-Range mismatch')
     temporary.replace(path)
     return content
+
+
+def write_point_cache(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                         prefix='.' + path.name, suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(value, stream, ensure_ascii=False, indent=2)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def get_listing(run, cache, refresh=False):
@@ -166,8 +211,11 @@ def fetch_hour(run, lead, entries, cache, keep_grib):
     available_at = check_availability(meta['LastModified'], index_meta['LastModified'], origin)
     cached = cache / 'points' / date / f'f{lead:03d}.json'
     if cached.exists():
-        obj = json.loads(cached.read_text())
-        if (obj.get('schema_version') == 1 and obj.get('etag') == meta['ETag']
+        try:
+            obj = json.loads(cached.read_text())
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            obj = None
+        if (isinstance(obj, dict) and obj.get('schema_version') == 1 and obj.get('etag') == meta['ETag']
                 and obj.get('available_at_utc') == available_at):
             return obj
     directory = cache / 'messages' / date
@@ -177,12 +225,12 @@ def fetch_hour(run, lead, entries, cache, keep_grib):
     for path in (index_path, directory / f'f{lead:03d}-temperature.grib2',
                  directory / f'f{lead:03d}-wind.grib2'):
         path.unlink(missing_ok=True)
-    index_text = download(BASE + '/' + key + '.idx', index_path).decode()
+    index_text = download(BASE + '/' + key + '.idx', index_path, expected_metadata=index_meta).decode()
     ranges = select_ranges(index_text)
     fields, message_evidence, generated_paths = {}, {}, []
     for name, byte_range in ranges.items():
         path = directory / f'f{lead:03d}-{name}.grib2'
-        payload = download(BASE + '/' + key, path, byte_range)
+        payload = download(BASE + '/' + key, path, byte_range, expected_metadata=meta)
         validate_grib_messages(payload)
         with DECODE_LOCK:
             fields.update(decode_fields(payload, run, lead))
@@ -205,8 +253,7 @@ def fetch_hour(run, lead, entries, cache, keep_grib):
         })
     obj = {'schema_version': 1, 'etag': meta['ETag'], 'available_at_utc': available_at,
            'source_key': key, 'message_evidence': message_evidence, 'grid_fields': fields, 'rows': rows}
-    cached.parent.mkdir(parents=True, exist_ok=True)
-    cached.write_text(json.dumps(obj, ensure_ascii=False, indent=2))
+    write_point_cache(cached, obj)
     if not keep_grib:
         for path in generated_paths:
             path.unlink()

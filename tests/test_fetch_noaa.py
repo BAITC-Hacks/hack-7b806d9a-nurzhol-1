@@ -1,6 +1,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import unittest
 import tempfile
 from unittest.mock import patch
@@ -107,7 +108,7 @@ class NOAAContractTests(unittest.TestCase):
 
         fresh_grib = b''.join(message(marker) for marker in (b'skip', b'Tnew', b'Unew', b'Vnew'))
 
-        def download(url, path, byte_range=None):
+        def download(url, path, byte_range=None, **kwargs):
             payload = fresh_index.encode() if url.endswith('.idx') else fresh_grib[byte_range[0]:byte_range[1] + 1]
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(payload)
@@ -162,6 +163,116 @@ class NOAAContractTests(unittest.TestCase):
             with patch.object(m, 'download', side_effect=AssertionError('Matching point cache must work offline')):
                 result = m.fetch_hour(run, 7, entries, cache, keep_grib=False)
             self.assertEqual(result, point_data)
+
+    def http_archive_fixture(self, overrides=None, require_conditions=False):
+        """Replace only external HTTP and GRIB decoding, retaining download checks."""
+        run = datetime(2025, 11, 4, 12, tzinfo=timezone.utc)
+        key = 'gfs.20251104/12/atmos/gfs.t12z.pgrb2.0p25.f007'
+        entries = {key: {'ETag': '"grib-original"', 'LastModified': '2025-11-04T15:00:00.987Z'},
+                   key + '.idx': {'ETag': '"index-original"', 'LastModified': '2025-11-04T15:01:00.123Z'}}
+        index = ('1:0:d=2025110412:TMP:2 m above ground:7 hour fcst:\n'
+                 '2:24:d=2025110412:UGRD:100 m above ground:7 hour fcst:\n'
+                 '3:48:d=2025110412:VGRD:100 m above ground:7 hour fcst:\n'
+                 '4:72:d=2025110412:TMP:surface:7 hour fcst:\n').encode()
+        grib = b''.join(b'GRIB' + b'\x00\x00\x00\x02' + (24).to_bytes(8, 'big') + marker + b'7777'
+                        for marker in (b'Tnew', b'Unew', b'Vnew'))
+
+        def curl(command, **kwargs):
+            is_index = command[-1].endswith('.idx')
+            stage, payload, status = 'index', index, '200'
+            headers = {'ETag': '"index-original"' if is_index else '"grib-original"',
+                       'Last-Modified': 'Tue, 04 Nov 2025 15:01:00 GMT' if is_index else 'Tue, 04 Nov 2025 15:00:00 GMT'}
+            if require_conditions:
+                self.assertIn('If-Match: ' + headers['ETag'], command)
+            if not is_index:
+                start, end = map(int, command[command.index('--range') + 1].split('-'))
+                stage = 'temperature' if start == 0 else 'wind'
+                payload, status = grib[start:end + 1], '206'
+                headers['Content-Range'] = f'bytes {start}-{end}/{len(grib)}'
+            previous = f'HTTP/1.1 {status} OK\r\n' + ''.join(f'{k}: {v}\r\n' for k, v in headers.items()) + '\r\n'
+            headers.update((overrides or {}).get(stage, {}))
+            final = f'HTTP/1.1 {status} OK\r\n' + ''.join(f'{k}: {v}\r\n' for k, v in headers.items() if v is not None) + '\r\n'
+            Path(command[command.index('-D') + 1]).write_text(previous + final)
+            Path(command[command.index('-o') + 1]).write_bytes(payload)
+            return subprocess.CompletedProcess(command, 0, status, '')
+
+        def decode(payload, actual_run, lead):
+            self.assertEqual(actual_run, run)
+            self.assertEqual(lead, 7)
+            values = {b'Tnew': ('temperature', 282.15), b'Unew': ('u', 3), b'Vnew': ('v', 4)}
+            fields = {}
+            for start in range(0, len(payload), 24):
+                name, value = values[payload[start + 16:start + 20]]
+                fields[name] = {turbine: {'value': value, 'corners': []} for turbine in (1, 2)}
+            return fields
+
+        return run, entries, curl, decode
+
+    def test_index_and_both_grib_ranges_reject_changed_or_missing_source_identity(self):
+        m = self.implementation()
+        changes = ({'ETag': '"replaced"'}, {'ETag': None},
+                   {'Last-Modified': 'Wed, 05 Nov 2025 15:00:00 GMT'},
+                   {'Last-Modified': None}, {'Last-Modified': 'invalid date'})
+        for stage in ('index', 'temperature', 'wind'):
+            for change in changes:
+                with self.subTest(stage=stage, change=change), tempfile.TemporaryDirectory() as directory:
+                    run, entries, curl, decode = self.http_archive_fixture({stage: change})
+                    cache = Path(directory)
+                    with patch.object(m.subprocess, 'run', side_effect=curl), patch.object(m, 'decode_fields', side_effect=decode):
+                        with self.assertRaisesRegex(ValueError, 'ETag|Last-Modified|publication'):
+                            m.fetch_hour(run, 7, entries, cache, keep_grib=False)
+                    self.assertFalse((cache / 'points/20251104/f007.json').exists())
+
+    def test_matching_downloads_use_conditional_requests_and_http_date_precision(self):
+        m = self.implementation()
+        run, entries, curl, decode = self.http_archive_fixture(require_conditions=True)
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(m.subprocess, 'run', side_effect=curl), patch.object(m, 'decode_fields', side_effect=decode):
+                result = m.fetch_hour(run, 7, entries, Path(directory), keep_grib=False)
+            self.assertEqual([row['wind_speed_100m_ms'] for row in result['rows']], [5, 5])
+            self.assertEqual(result['available_at_utc'], '2025-11-04T15:01:00.123000+00:00')
+
+    def test_malformed_point_cache_is_rebuilt_and_reusable_offline(self):
+        m = self.implementation()
+        for content in (b'{"schema_version": 1', b'\xff', b'null', b'[]'):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as directory:
+                cache = Path(directory)
+                point = cache / 'points/20251104/f007.json'
+                point.parent.mkdir(parents=True)
+                point.write_bytes(content)
+                run, entries, curl, decode = self.http_archive_fixture()
+                with patch.object(m.subprocess, 'run', side_effect=curl), patch.object(m, 'decode_fields', side_effect=decode):
+                    try:
+                        result = m.fetch_hour(run, 7, entries, cache, keep_grib=False)
+                    except (ValueError, AttributeError) as error:
+                        self.fail(f'Malformed point cache prevented rebuilding: {error}')
+                self.assertEqual(json.loads(point.read_text()), json.loads(json.dumps(result)))
+                with patch.object(m.subprocess, 'run', side_effect=AssertionError('Valid cache must work offline')):
+                    reused = m.fetch_hour(run, 7, entries, cache, keep_grib=False)
+                self.assertEqual(reused['rows'], result['rows'])
+                self.assertEqual(reused['etag'], result['etag'])
+
+    def test_interrupted_point_cache_commit_preserves_previous_file_and_cleans_temporary(self):
+        m = self.implementation()
+        run, entries, curl, decode = self.http_archive_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            point = cache / 'points/20251104/f007.json'
+            point.parent.mkdir(parents=True)
+            previous = b'{"schema_version": 1, "etag": "old-etag"}'
+            point.write_bytes(previous)
+            replace = Path.replace
+
+            def fail_point_commit(source, destination):
+                if Path(destination) == point:
+                    raise OSError('simulated interrupted point commit')
+                return replace(source, destination)
+
+            with patch.object(m.subprocess, 'run', side_effect=curl), patch.object(m, 'decode_fields', side_effect=decode), patch.object(Path, 'replace', fail_point_commit):
+                with self.assertRaisesRegex(OSError, 'interrupted point commit'):
+                    m.fetch_hour(run, 7, entries, cache, keep_grib=False)
+            self.assertEqual(point.read_bytes(), previous)
+            self.assertEqual(list(point.parent.iterdir()), [point])
 
 
 if __name__ == '__main__':

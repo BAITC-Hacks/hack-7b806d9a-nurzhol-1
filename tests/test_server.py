@@ -73,6 +73,28 @@ class LocalHTTPTests(unittest.TestCase):
     def restart_app(self):
         self.server.app=DemoApp(self.root,HTTPService(self.root))
 
+    def test_failed_initial_save_does_not_block_the_next_run(self):
+        with patch.object(self.server.app,'save',side_effect=OSError('Disk temporarily unavailable')):
+            with self.assertRaises(HTTPError) as caught:
+                self.request('/api/run',{'issue_date':'2026-01-31','mode':'deterministic'})
+        self.assertEqual(caught.exception.code,500)
+        self.assertEqual(self.server.app.list_jobs(),[])
+        job=self.completed_job()
+        self.assertEqual([entry['job_id'] for entry in self.server.app.list_jobs()],[job['job_id']])
+
+    def test_failed_worker_start_does_not_block_the_next_run(self):
+        with patch('windops.server.threading.Thread.start',side_effect=RuntimeError('Worker unavailable')):
+            with self.assertRaisesRegex(RuntimeError,'Worker unavailable'):
+                self.server.app.start('2026-01-31','deterministic',False)
+        failed=self.server.app.list_jobs()
+        self.assertEqual(len(failed),1)
+        self.assertEqual(failed[0]['status'],'failed')
+        self.assertIn('Worker unavailable',failed[0]['error'])
+        self.assertIsNotNone(failed[0]['finished_at'])
+        self.completed_job()
+        restored=DemoApp(self.root,HTTPService(self.root)).get_job(failed[0]['job_id'])
+        self.assertEqual(restored['status'],'failed')
+
     def test_history_survives_restart_with_timestamps_and_isolation(self):
         job=self.completed_job()
         self.assertIsNotNone(job.get('created_at'))

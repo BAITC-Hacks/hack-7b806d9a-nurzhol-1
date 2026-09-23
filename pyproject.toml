@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "windops"
+version = "0.1.0"
+description = "Archived wind power forecasts and bounded AI orchestration"
+requires-python = "~=3.12.0"
+dependencies = [
+    "numpy==2.3.5",
+    "pandas==2.2.3",
+]
+
+[project.optional-dependencies]
+research = [
+    "eccodes==2.48.0",
+    "matplotlib==3.11.2",
+    "catboost==1.2.10",
+]
+
+[tool.setuptools]
+packages = ["windops", "scripts"]
