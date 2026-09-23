@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>WindOps — демо</title>
+  <script src="assets/gsap.min.js"></script>
+  <script src="assets/data.js"></script>
+  <style>
+    @font-face{font-family:Manrope;src:url('assets/Manrope.ttf') format('truetype');font-weight:200 800;font-display:block}
+    *{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#172b45;font-family:Manrope,sans-serif}
+    #root{position:relative;width:100%;height:100%;overflow:hidden;background:#f3f6fb}
+    .clip{position:absolute;inset:0}.stage{position:absolute;inset:0}
+    .brand{display:flex;gap:18px;align-items:center;font-size:42px;font-weight:800;letter-spacing:-2px}
+    .brand svg{width:60px;height:60px;color:#235be8}.top{position:absolute;left:80px;right:80px;top:50px;display:flex;align-items:center;justify-content:space-between;z-index:9}
+    .tag{font-size:21px;font-weight:600;color:#526680;letter-spacing:2px}.tag b{color:#167465}
+    .rule{position:absolute;left:80px;right:80px;top:141px;height:2px;background:#d6e1ef}
+    .footer{position:absolute;bottom:42px;left:80px;right:80px;display:flex;justify-content:space-between;font-size:20px;color:#536981;z-index:9}
+    .kicker{font-size:24px;font-weight:700;color:#526680;letter-spacing:2px;text-transform:uppercase}
+    h1,h2,h3,p{margin:0}h1{font-size:94px;line-height:1.13;letter-spacing:-4px;font-weight:700}h2{font-size:64px;line-height:1.2;letter-spacing:-2px}h3{font-size:30px;line-height:1.4}
+    .muted{color:#526680}.blue{color:#235be8}.amber{color:#a25a0c}.teal{color:#167465}.small{font-size:23px}.body{font-size:30px;line-height:1.6}
+    .panel{background:#fff;border:2px solid #dce5f0;border-radius:26px;box-shadow:0 22px 65px #142d4e0e}
+    .legend{display:flex;gap:30px;align-items:center;font-size:23px}.legend span{display:flex;align-items:center;gap:12px}.legend i{width:35px;border-top:4px solid currentColor;display:inline-block}.legend .amber i,.legend .old i{border-top-style:dashed}
+    .pill{padding:10px 19px;border-radius:12px;background:#edf2ff;color:#235be8;font-size:23px;font-weight:700}
+    .btn{padding:19px 27px;background:#235be8;border-radius:14px;color:#fff;font-size:26px;font-weight:700;display:inline-flex;align-items:center;gap:14px;box-shadow:0 8px 18px #235be822}
+    .cursor{position:absolute;width:44px;height:55px;z-index:8;filter:drop-shadow(0 3px 4px #132b4544)}
+    .hero-copy{position:absolute;left:80px;top:240px;width:1230px}.hero-copy h1{margin-top:22px}.hero-copy p{font-size:42px;margin-top:30px;letter-spacing:-1px}
+    .hero-number{position:absolute;right:94px;top:198px;width:420px;text-align:right}.hero-number strong{display:block;font-size:250px;font-weight:700;line-height:1.25;letter-spacing:-18px;color:#235be8}.hero-number p{font-size:32px;padding-top:24px;padding-right:12px;color:#526680}
+    .hero-graph{position:absolute;left:80px;right:80px;top:616px;height:293px;border-top:2px solid #d6e1ef}.hero-legend{position:absolute;right:92px;top:914px}
+    .screen-title{position:absolute;left:80px;top:194px}.screen-title p{margin-top:14px;font-size:25px;color:#526680}.run{position:absolute;right:80px;top:212px}
+    .forecast-card{position:absolute;left:80px;top:341px;width:1198px;height:590px;padding:31px 36px}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:21px}.card-head p{font-size:22px;color:#526680}.chart{height:360px;width:100%}.chart svg,.hero-graph svg{width:100%;height:100%;display:block}
+    .inspector{border-top:2px solid #e1e7f0;padding-top:19px;display:flex;justify-content:space-between;align-items:center}.inspector strong{font-size:28px;font-weight:700;display:inline-block;margin-right:16px}.inspector span{font-size:20px;color:#526680;display:block;margin-bottom:5px}
+    .agent-card{position:absolute;left:1310px;top:341px;width:530px;height:590px;padding:34px}.agent-card h3{margin-bottom:26px}.step{display:flex;gap:18px;align-items:center;margin-top:25px;font-size:25px}.step .num{width:47px;height:47px;display:grid;place-items:center;border-radius:50%;background:#edf2f8;color:#526680;font-size:22px;flex-shrink:0}.step p{font-size:20px;margin-top:4px;color:#526680}.step.done .num{background:#167465;color:#fff}.agent-note{font-size:21px;line-height:1.5;margin-top:31px;color:#526680}.done-label{margin-top:24px;font-size:22px;color:#167465;font-weight:700}
+    .peak-chip{position:absolute;left:366px;top:458px;background:#172b45;color:#fff;padding:15px 23px;border-radius:13px;font-size:24px;box-shadow:0 8px 25px #172b4520}
+    .peak-chip::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:21px;background:#172b45}
+    .compare-card{position:absolute;left:80px;top:338px;width:1070px;height:593px;padding:32px}.compare-card .chart{height:326px}.compare-bottom{margin-top:20px;padding-top:19px;border-top:2px solid #e1e7f0;display:flex;justify-content:space-between;font-size:24px}.old{color:#63768b}
+    .question-card{position:absolute;left:1184px;top:338px;width:656px;height:593px;padding:34px}.question{margin-top:28px;background:#edf2ff;border-radius:15px;padding:22px 24px;font-size:28px;line-height:1.4}.answer{margin-top:24px;border-top:2px solid #e1e7f0;padding-top:24px}.answer .when{font-size:32px;font-weight:700;margin:10px 0 20px}.answer .values{display:flex;gap:34px;font-size:32px;font-weight:700}.sources{font-size:20px;color:#526680;margin-top:24px}
+    .end-copy{position:absolute;left:80px;top:266px;width:627px}.end-copy h2{font-size:63px;line-height:1.27;margin-top:26px}.end-copy .body{margin-top:28px;color:#526680;font-size:28px}.end-copy .btn{margin-top:45px}.actual-screen{position:absolute;left:755px;top:260px;width:1085px;height:610px;border-radius:22px;border:2px solid #ccd9e9;overflow:hidden;box-shadow:0 30px 80px #172b4520;background:#fff}.actual-screen img{width:100%;height:100%;object-fit:cover;display:block}.screen-caption{position:absolute;left:756px;top:901px;font-size:23px;color:#526680}
+  </style>
+</head>
+<body>
+<div data-hf-id="hf-th1p" id="root" data-composition-id="windops" data-width="1920" data-height="1080" data-duration="24" data-fps="30">
+  <div data-hf-id="hf-sijt" class="top"><div data-hf-id="hf-qkaf" class="brand"><svg data-hf-id="hf-mp6z" class="brand-mark" viewBox="0 0 40 40" fill="none"><path data-hf-id="hf-nzmd" d="M20 20V5M20 20 7 27.5M20 20 33 27.5M20 23v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><circle data-hf-id="hf-2c4u" cx="20" cy="20" r="3.3" fill="currentColor" /></svg>WindOps</div><div data-hf-id="hf-kfr2" class="tag"><b data-hf-id="hf-y4v2">●</b> АРХИВ · ФЕВРАЛЬ 2026</div></div>
+  <div data-hf-id="hf-a46i" class="rule"></div>
+  <div data-hf-id="hf-yh7l" class="footer"><span data-hf-id="hf-ahy1">NOAA GFS → модель мощности → AI-анализ</span><span data-hf-id="hf-8jcr">UTC+5 · Мощность 0–1</span></div>
+
+  <section data-hf-id="hf-ncud" class="clip" id="hook" data-start="0" data-duration="4" data-track-index="0"><div data-hf-id="hf-bg1s" class="stage" id="hook-stage">
+    <div data-hf-id="hf-jloi" class="hero-copy"><div data-hf-id="hf-nvb8" class="kicker">Две турбины. Один рабочий экран.</div><h1 data-hf-id="hf-4l3g">Ветер меняется.</h1><p data-hf-id="hf-a9i3">Увидьте следующие 48 часов.</p></div>
+    <div data-hf-id="hf-ilcq" class="hero-number"><strong data-hf-id="hf-gp3a">48</strong><p data-hf-id="hf-rgid">часов прогноза</p></div>
+    <div data-hf-id="hf-2iuf" class="hero-graph" id="hook-chart"></div><div data-hf-id="hf-r4xp" class="legend hero-legend"><span data-hf-id="hf-v44x" class="blue"><i data-hf-id="hf-wt6k"></i>Турбина 1</span><span data-hf-id="hf-2k6d" class="amber"><i data-hf-id="hf-zeb8"></i>Турбина 2</span></div>
+  </div></section>
+
+  <section data-hf-id="hf-a3rl" class="clip" id="forecast-scene" data-start="4" data-duration="6.93" data-track-index="1"><div data-hf-id="hf-r9pm" class="stage" id="forecast-stage">
+    <div data-hf-id="hf-wcoh" class="screen-title"><h2 data-hf-id="hf-68t8">Прогноз на 48 часов</h2><p data-hf-id="hf-85ug">Выпуск 01.02.2026 · 23:00 UTC+5</p></div>
+    <div data-hf-id="hf-zgvf" class="run btn" id="run-demo">▶&#160; Рассчитать прогноз</div>
+    <div data-hf-id="hf-fxrk" class="forecast-card panel"><div data-hf-id="hf-841h" class="card-head"><div data-hf-id="hf-ovnn" class="legend"><span data-hf-id="hf-of51" class="blue"><i data-hf-id="hf-y7e5"></i>Турбина 1</span><span data-hf-id="hf-mwhl" class="amber"><i data-hf-id="hf-ylp6"></i>Турбина 2</span></div><span data-hf-id="hf-gpod" class="pill">48 ч</span></div><div data-hf-id="hf-oza7" class="chart" id="forecast-plot"></div><div data-hf-id="hf-9b77" class="inspector"><div data-hf-id="hf-yeow"><span data-hf-id="hf-i55h">Пик · 02.02 · 14:00 UTC+5</span><strong data-hf-id="hf-lgef" class="blue">Т1 0,750</strong>&#160;&#160;<strong data-hf-id="hf-6btf" class="amber">Т2 0,721</strong></div><div data-hf-id="hf-y7yw"><span data-hf-id="hf-2wsa">Прогноз ветра</span><strong data-hf-id="hf-7aau">9,65 / 9,55 м/с</strong></div></div></div>
+    <div data-hf-id="hf-ndx0" class="agent-card panel"><div data-hf-id="hf-ootz" class="kicker">Работа агента</div><div data-hf-id="hf-x1l3" class="step" id="step1"><span data-hf-id="hf-kud6" class="num">1</span><div data-hf-id="hf-1q0k">Погода<p data-hf-id="hf-ofb3">Архив NOAA GFS</p></div></div><div data-hf-id="hf-m63g" class="step" id="step2"><span data-hf-id="hf-l8o7" class="num">2</span><div data-hf-id="hf-nqk6">Проверка данных<p data-hf-id="hf-zz3h">Полнота и публикация</p></div></div><div data-hf-id="hf-mxr9" class="step" id="step3"><span data-hf-id="hf-lmz8" class="num">3</span><div data-hf-id="hf-t20v">Прогноз мощности<p data-hf-id="hf-3b7h">Фиксированная модель</p></div></div><div data-hf-id="hf-5pgy" class="step" id="step4"><span data-hf-id="hf-m1a9" class="num">4</span><div data-hf-id="hf-zmsb">Анализ результата<p data-hf-id="hf-x3y4">Объяснение OpenAI</p></div></div><div data-hf-id="hf-ech2" class="done-label">✓ 96 значений рассчитаны</div><p data-hf-id="hf-4i2i" class="agent-note">Сокращённый монтаж этапов расчёта.</p></div>
+    <div data-hf-id="hf-y2lc" class="peak-chip">Пик · 02.02 · 14:00</div>
+    <svg data-hf-id="hf-9mdv" class="cursor" id="run-cursor" style="left:1715px;top:302px" viewBox="0 0 40 50"><path data-hf-id="hf-zq82" d="M3 2 35 28 20 31 14 46Z" fill="#172b45" stroke="white" stroke-width="3" /></svg>
+  </div></section>
+
+  <section data-hf-id="hf-97ex" class="clip" id="understand-scene" data-start="10.93" data-duration="6.54" data-track-index="2"><div data-hf-id="hf-v0af" class="stage" id="understand-stage">
+    <div data-hf-id="hf-psmd" class="screen-title"><h2 data-hf-id="hf-d2xo">Что изменилось?</h2><p data-hf-id="hf-9cl6">Сравните выпуски. Спросите о конкретных часах.</p></div>
+    <div data-hf-id="hf-60ge" class="compare-card panel"><div data-hf-id="hf-wzhl" class="card-head"><h3 data-hf-id="hf-6ru3">Сравнение выпусков · Т1</h3><span data-hf-id="hf-tua1" class="pill">24 общих часа</span></div><div data-hf-id="hf-rt1f" class="legend"><span data-hf-id="hf-5glv" class="old"><i data-hf-id="hf-0l8b"></i>31 января</span><span data-hf-id="hf-22sd" class="blue"><i data-hf-id="hf-0zjc"></i>1 февраля</span></div><div data-hf-id="hf-6d5l" class="chart" id="compare-plot"></div><div data-hf-id="hf-d7xz" class="compare-bottom"><span data-hf-id="hf-qnzw">02.02 · 00:00 UTC+5</span><strong data-hf-id="hf-l1ct">0,308 → <span data-hf-id="hf-cmjx" class="blue">0,147</span></strong></div></div>
+    <div data-hf-id="hf-ggx1" class="question-card panel"><div data-hf-id="hf-ikd7" class="kicker">Спросить о прогнозе</div><div data-hf-id="hf-zo4d" class="question">Когда ожидается пик мощности?</div><div data-hf-id="hf-rpyu" class="answer"><div data-hf-id="hf-1aos" class="small muted">Обе турбины</div><p data-hf-id="hf-5ey5" class="when">02.02 · 14:00 UTC+5</p><div data-hf-id="hf-b4qi" class="values"><span data-hf-id="hf-k458" class="blue">Т1 0,750</span><span data-hf-id="hf-nj1q" class="amber">Т2 0,721</span></div><p data-hf-id="hf-dgwi" class="sources">Источник: выбранный прогноз.</p></div></div>
+  </div></section>
+
+  <section data-hf-id="hf-y3c0" class="clip" id="end-scene" data-start="17.47" data-duration="6.53" data-track-index="3"><div data-hf-id="hf-rpze" class="stage" id="end-stage">
+    <div data-hf-id="hf-7omn" class="end-copy"><div data-hf-id="hf-ljq3" class="kicker">WindOps</div><h2 data-hf-id="hf-ibsg">От погоды — к понятному прогнозу.</h2><p data-hf-id="hf-vu0e" class="body">Сравнение · История · CSV</p><div data-hf-id="hf-mdj3" class="btn">Запустите из README&#160; ↗</div></div>
+    <div data-hf-id="hf-wupj" class="actual-screen"><img data-hf-id="hf-2lbm" src="assets/windops-screen.png" alt="Реальный экран WindOps: прогноз и завершённые этапы агента"></div><p data-hf-id="hf-lv9z" class="screen-caption">Реальный интерфейс · выпуск 1 февраля 2026</p>
+  </div></section>
+
+  <audio data-hf-id="hf-u27o" id="music" src="assets/music.mp3" data-start="0" data-duration="24" data-track-index="10" data-volume="0.30" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:0.6,&quot;v&quot;:0.30},{&quot;t&quot;:21.5,&quot;v&quot;:0.30},{&quot;t&quot;:24,&quot;v&quot;:0}]}]}"></audio>
+  <audio data-hf-id="hf-6zss" id="click-run" src="assets/click.ogg" data-start="4.67" data-duration="0.06" data-track-index="11" data-volume="0.45"></audio>
+  <audio data-hf-id="hf-fz96" id="click-compare" src="assets/click.ogg" data-start="10.93" data-duration="0.06" data-track-index="12" data-volume="0.4"></audio>
+  <audio data-hf-id="hf-3l9i" id="reveal-end" src="assets/reveal.ogg" data-start="17.47" data-duration="0.18" data-track-index="13" data-volume="0.35"></audio>
+</div>
+<script>
+  // The chart-story registry primitive's synchronous SVG + stroke reveal pattern,
+  // adapted to exact WindOps series with a shared clip mask preserving dashed T2.
+  const NS='http://www.w3.org/2000/svg';
+  const t1=FORECAST.rows.filter(r=>r.turbine_id===1),t2=FORECAST.rows.filter(r=>r.turbine_id===2);
+  const old=PREVIOUS.rows.filter(r=>r.turbine_id===1&&r.valid_time_local.slice(0,10)==='2026-02-02');
+  function el(tag,attrs,parent,text){const n=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);if(text)n.textContent=text;parent.appendChild(n);return n;}
+  function chart(id,series,{width=1126,height=360,mini=false,labels=['02.02 · 00:00','02.02 · 12:00','03.02 · 00:00','03.02 · 12:00','23:00']}={}){
+    const host=document.getElementById(id),svg=el('svg',{viewBox:`0 0 ${width} ${height}`},host);
+    const l=mini?8:58,r=20,top=mini?15:24,bottom=mini?15:48,w=width-l-r,h=height-top-bottom;
+    const defs=el('defs',{},svg),clip=el('clipPath',{id:id+'-clip'},defs);
+    const rect=el('rect',{x:l,y:0,width:w,height:height},clip);rect.id=id+'-reveal';
+    for(const v of [0,.25,.5,.75,1]){const y=top+(1-v)*h;el('line',{x1:l,x2:width-r,y1:y,y2:y,stroke:'#dce5ef','stroke-width':1.5},svg);if(!mini)el('text',{x:l-15,y:y+7,'text-anchor':'end',fill:'#526680','font-size':19},svg,v.toFixed(2).replace('.',','));}
+    if(!mini)labels.forEach((v,i)=>el('text',{x:l+(i===labels.length-1?series[0].rows.length-1:i*(series[0].rows.length===48?12:6))*w/(series[0].rows.length-1),y:height-11,'text-anchor':i===0?'start':i===labels.length-1?'end':'middle',fill:'#526680','font-size':19},svg,v));
+    const group=el('g',{'clip-path':`url(#${id}-clip)`},svg);
+    series.forEach((s,i)=>{
+      const pts=s.rows.map((r,j)=>[l+j*w/(s.rows.length-1),top+(1-r.power_normalized)*h]);
+      const d=pts.map((p,j)=>(j?'L':'M')+p.join(' ')).join(' ');
+      if(i===0)el('path',{d:d+` L ${width-r} ${top+h} L ${l} ${top+h} Z`,fill:'#235be8','fill-opacity':mini?.05:.055},group);
+      el('path',{d,fill:'none',stroke:s.color,'stroke-width':mini?5:4,'stroke-dasharray':s.dash?'12 8':'none','stroke-linejoin':'round','stroke-linecap':'round'},group);
+      if(!mini)s.rows.forEach((row,j)=>{if(j%3===0)el('circle',{cx:pts[j][0],cy:pts[j][1],r:3,fill:'#fff',stroke:s.color,'stroke-width':2},group);});
+    });
+  }
+  chart('hook-chart',[{rows:t1,color:'#235be8'},{rows:t2,color:'#b56b16',dash:true}],{width:1760,height:293,mini:true});
+  chart('forecast-plot',[{rows:t1,color:'#235be8'},{rows:t2,color:'#b56b16',dash:true}]);
+  chart('compare-plot',[{rows:old,color:'#63768b',dash:true},{rows:t1.slice(0,24),color:'#235be8'}],{width:1002,height:326,labels:['00:00','06:00','12:00','18:00','23:00']});
+  const peak1=t1.reduce((a,b)=>a.power_normalized>b.power_normalized?a:b),peak2=t2.reduce((a,b)=>a.power_normalized>b.power_normalized?a:b);
+  document.querySelector('.inspector div:last-child strong').textContent=peak1.wind_speed_ms.toFixed(2).replace('.',',')+' / '+peak2.wind_speed_ms.toFixed(2).replace('.',',')+' м/с';
+  const tl=gsap.timeline({paused:true});
+  tl.from('.hero-copy',{y:28,opacity:0,duration:.65,ease:'power3.out'},.1);
+  tl.from('.hero-number',{x:34,opacity:0,duration:.8,ease:'power2.out'},.25);
+  tl.fromTo('#hook-chart-reveal',{scaleX:0},{scaleX:1,transformOrigin:'left center',duration:2.6,ease:'power1.inOut'},.3);
+  tl.to('#hook-stage',{opacity:0,y:-15,duration:.3},3.7);
+  tl.from('#forecast-stage',{opacity:0,y:24,duration:.42,ease:'power2.out'},4);
+  tl.fromTo('#run-cursor',{x:60,y:50,opacity:0},{x:0,y:-51,opacity:1,duration:.55,ease:'power2.out'},4.1);
+  tl.to('#run-demo',{scale:.96,duration:.1,yoyo:true,repeat:1,ease:'power1.inOut'},4.67);
+  tl.to('#run-cursor',{opacity:0,duration:.25},4.95);
+  ['step1','step2','step3','step4'].forEach((id,i)=>{
+    const at=[4.91,5.6,6.56,7.64][i];
+    tl.from('#'+id,{x:20,opacity:.28,duration:.45,ease:'power2.out'},at);
+    tl.to('#'+id+' .num',{backgroundColor:'#167465',color:'#fff',duration:.3},at);
+  });
+  tl.fromTo('#forecast-plot-reveal',{scaleX:0},{scaleX:1,transformOrigin:'left center',duration:2,ease:'power1.inOut'},6.2);
+  tl.from('.inspector',{opacity:0,y:12,duration:.4},8.2);
+  tl.from('.done-label',{opacity:0,y:10,duration:.4},8.35);
+  tl.from('.peak-chip',{opacity:0,y:15,duration:.35,ease:'power3.out'},8.74);
+  tl.to('#forecast-stage',{opacity:0,y:-12,duration:.28},10.65);
+  tl.from('#understand-stage',{opacity:0,y:20,duration:.4,ease:'power2.out'},10.93);
+  tl.fromTo('#compare-plot-reveal',{scaleX:0},{scaleX:1,transformOrigin:'left center',duration:1.3,ease:'power1.inOut'},11.3);
+  tl.from('.question',{x:24,opacity:0,duration:.42,ease:'power3.out'},12.3);
+  tl.from('.answer',{y:18,opacity:0,duration:.5,ease:'power2.out'},13.11);
+  tl.to('#understand-stage',{opacity:0,y:-12,duration:.27},17.2);
+  tl.from('.end-copy',{x:-24,opacity:0,duration:.55,ease:'power3.out'},17.47);
+  tl.from('.actual-screen',{x:40,scale:.965,opacity:0,duration:.65,ease:'power2.out'},17.47);
+  tl.from('.screen-caption',{opacity:0,duration:.4},18.1);
+  // Pre-extracted bass subtly changes the actual turbine mark, never the text.
+  for(let f=0;f<AUDIO_BASS.length;f++){const b=AUDIO_BASS[f];tl.call(()=>{gsap.set('.brand-mark',{opacity:.78+.22*b});},[],f/30);}
+  window.__timelines['windops']=tl;
+</script>
+</body>
+</html>

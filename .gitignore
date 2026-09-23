@@ -63,3 +63,10 @@ outputs/ui-before/
 outputs/first_forecast/
 # Experimental models are opt-in and never activated by a clone.
 outputs/gfs_ml/active.json
+
+# Local video-render caches and QA frames
+.hyperframes/
+brag-output/composition/snapshots/
+.thumbnails/
+.waveform-cache/
+brag-output/work-*/

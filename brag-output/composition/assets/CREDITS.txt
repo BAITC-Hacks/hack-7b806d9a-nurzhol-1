@@ -1,0 +1,27 @@
+WindOps demo assets
+
+music.mp3: Happy Beats & Business Moves Vol. 12, produced by Sascha Ende.
+Source: https://ende.app/en/song/12881-happy-beats-business-moves-vol-12
+License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+License verified 2026-09-23: https://ende.app/en/standard-license
+The video uses the first 24 seconds with volume adjustment and fade-in/out.
+Bundled source supplied by https://github.com/latent-spaces/brag
+
+click.ogg: ui/click2.ogg; reveal.ogg: impact/impactSoft_medium_001.ogg.
+Kenney (https://kenney.nl/), CC0 1.0. Supplied by the brag asset library.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Manrope.ttf: Manrope by Mikhail Sharanda and Mirko Velimirovic.
+SIL Open Font License 1.1; see Manrope-OFL.txt.
+Source: https://github.com/google/fonts/tree/main/ofl/manrope
+
+gsap.min.js: GSAP 3.14.2 by GreenSock. Original copyright/license header retained.
+https://gsap.com/standard-license/
+
+Chart composition uses the chart-story SVG reveal pattern from Hyperframes:
+https://github.com/heygen-com/hyperframes
+Exact forecast series and the interface screenshot come from this WindOps project.
+Screenshot captured after a successful OpenAI run for 2026-02-01.
+Question response was verified through the live interface: both peaks at
+2026-02-02 14:00 UTC+5, turbine 1 = 0.7504, turbine 2 = 0.7209.
+On-screen numbers are rounded to three decimals.
