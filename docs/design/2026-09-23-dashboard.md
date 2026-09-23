@@ -12,4 +12,6 @@ The site has one calculation action: the numerical model forecasts power and Ope
 
 Quiet surrounding chrome; no decorative KPI metrics, pretend notifications or fabricated agent activity. Preserve all current model, time, source verification and error handling. The prepared model remains unchanged.
 
-Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, hourly values selected on the chart, keyboard-accessible table, actual deterministic run, table and exports, console errors, existing relevant tests.
+Forecast events sit below the hourly inspector and select real hours. A grounded question form accompanies the agent. A separate analytics panel uses functional tabs for consecutive-issue comparison, January actual-versus-predicted validation, and persistent run history. Each chart has a values table. Comparison joins identical target hours; January scores are explicitly descriptive. Saved runs show their original forecast/model/explanation with a snapshot banner and snapshot CSV, never a silently recomputed result. Questions on a saved run use that same snapshot.
+
+Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, event selection, keyboard-accessible tabs and tables, comparison filters, January day/horizon filters, saved-run reopening and export, real grounded question, restart recovery, console errors, and relevant backend tests.

@@ -2,7 +2,8 @@
 
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { status: null, forecast: null, turbine: "both", metric: "power", horizon: 48, hour: 0, busy: false, job: null, request: 0, retry: null };
+  const state = { status: null, forecast: null, turbine: "both", metric: "power", horizon: 48, hour: 0, busy: false, job: null, request: 0, retry: null, snapshot: null, forecastJobId: null, asking: false, questionVersion: 0 };
+  const analytics = { tab: "comparison", comparison: null, validation: null, comparisonRequest: 0, validationRequest: 0, historyRequest: 0 };
   const HOUR = 3600000;
   const NS = "http://www.w3.org/2000/svg";
   const number = (value, digits = 3) => Number.isFinite(Number(value)) && value !== null && value !== "" ? Number(value).toLocaleString("ru-RU", { minimumFractionDigits: digits, maximumFractionDigits: digits }) : "—";
@@ -59,16 +60,17 @@
   };
 
   async function request(url, options = {}) {
+    const { timeoutMs = 45000, ...fetchOptions } = options;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response;
-    try { response = await fetch(url, { ...options, signal: controller.signal, headers: { Accept: "application/json", ...options.headers } }); }
+    try { response = await fetch(url, { ...fetchOptions, signal: controller.signal, headers: { Accept: "application/json", ...fetchOptions.headers } }); }
     catch (error) {
-      throw new Error(error.name === "AbortError" ? "Сервер не ответил за 45 секунд. Проверьте локальный сервер и повторите запрос." : "Нет соединения с локальным сервером. Убедитесь, что WindOps запущен, и повторите запрос.");
+      throw new Error(error.name === "AbortError" ? "Не удалось дождаться ответа сервера. Проверьте соединение и повторите запрос." : "Нет соединения с локальным сервером. Убедитесь, что WindOps запущен, и повторите запрос.");
     } finally { clearTimeout(timer); }
     let data;
     try { data = await response.json(); } catch { throw new Error(`Сервер вернул неожиданный ответ (${response.status}). Повторите запрос.`); }
-    if (!response.ok || (data.error && !["running", "complete", "failed"].includes(data.status))) {
+    if (!response.ok || (data.error && !["running", "complete", "failed", "interrupted"].includes(data.status))) {
       const error = data.error;
       const message = typeof error === "string" ? error : error?.message || data.message || `Ошибка сервера (${response.status})`;
       throw new Error(message);
@@ -96,6 +98,9 @@
     $("run-button").disabled = busy || !state.status?.openai_configured || !$("issue-date").value;
     $("run-button").querySelector("span").textContent = busy ? "Идёт расчёт…" : "Рассчитать прогноз";
     $("download-button").disabled = busy || !state.forecast;
+    $("snapshot-current").disabled = busy;
+    document.querySelectorAll("[data-open-job]").forEach((button) => { button.disabled = busy; });
+    updateQuestionControls();
     updateIssueNavigation();
   }
 
@@ -125,6 +130,8 @@
     ["kpi-power", "kpi-peak", "kpi-wind", "inspector-time", "inspector-power", "inspector-wind", "inspector-temperature"].forEach((id) => setText(id, "—"));
     setText("kpi-context", "Выберите выпуск для просмотра прогноза");
     state.hour = 0;
+    $("forecast-events").replaceChildren();
+    resetQuestion();
   }
 
   function applyStatus(status) {
@@ -160,6 +167,11 @@
     setText("february-help", data.february_ready ? "672 часа на турбину · 1 344 строки" : data.message || "Полный экспорт станет доступен после загрузки архива погоды.");
     setBusy(state.busy);
     if (status.model) renderModel(status.model);
+    const comparisonSelected = $("comparison-issue").value;
+    const comparableDates = dates.filter((day) => dates.includes(new Date(Date.parse(`${day}T00:00:00Z`) - 86400000).toISOString().slice(0, 10)));
+    fillSelect("comparison-issue", comparableDates, (day) => day, comparisonSelected || $("issue-date").value);
+    $("comparison-issue").disabled = !comparableDates.length;
+    if (!analytics.comparison && analytics.tab === "comparison") loadComparison();
   }
 
   function renderModel(model) {
@@ -174,6 +186,9 @@
     if (!$("issue-date").value) return;
     const id = ++state.request;
     const issue = $("issue-date").value;
+    state.snapshot = null;
+    state.forecastJobId = null;
+    $("snapshot-banner").hidden = true;
     clearError();
     resetForecast();
     chartLoading();
@@ -199,6 +214,7 @@
       applyStatus(status);
     }
     state.forecast = forecast;
+    resetQuestion();
     $("forecast").setAttribute("aria-busy", "false");
     $("download-button").disabled = state.busy;
     const ids = [...new Set(forecast.rows.map((row) => Number(row.turbine_id)))];
@@ -218,6 +234,7 @@
     setText("chart-end-note", hasSpillover ? "Включены часы марта · полный горизонт 48 ч" : "Почасовой прогноз · фактических данных февраля нет");
     if (forecast.model) renderModel(forecast.model);
     renderForecast();
+    updateQuestionControls();
   }
 
   function summaryRow(hours, rows, label = null) {
@@ -286,6 +303,7 @@
       setText("validation-description", state.status.evaluation.description);
     }
     renderHourlyTable(series);
+    renderForecastEvents();
     renderChart();
   }
 
@@ -327,6 +345,10 @@
     renderTurbineValues("inspector-power", series, (item) => valueAtHour(item, "power_normalized"), 3);
     renderTurbineValues("inspector-wind", series, (item) => valueAtHour(item, "wind_speed_ms"), 2);
     renderTurbineValues("inspector-temperature", series, (item) => valueAtHour(item, "temperature_c"), 1);
+    document.querySelectorAll("[data-event-id]").forEach((button) => {
+      const event = visibleForecastEvents().find((item) => item.id === button.dataset.eventId);
+      button.setAttribute("aria-pressed", String(!!event && state.hour >= event.start_hour && state.hour <= event.end_hour));
+    });
     updateCrosshair();
   }
 
@@ -384,6 +406,12 @@
       if (series.length === 1) chart.append(svgNode("path", { d: `${path} L${points.at(-1)[0]},${y(0)} L${points[0][0]},${y(0)} Z`, fill: item.color, opacity: .06 }));
       chart.append(svgNode("path", { d: path, fill: "none", stroke: item.color, "stroke-width": compact ? 2.1 : 2.5, "stroke-linejoin": "round", "stroke-linecap": "round", ...(item.turbine === 2 ? { "stroke-dasharray": "6 3" } : {}) }));
       if (!compact) points.forEach(([cx, cy]) => chart.append(svgNode("circle", { cx, cy, r: 1.7, fill: "#fff", stroke: item.color, "stroke-width": 1.2 })));
+    });
+    visibleForecastEvents().forEach((event) => {
+      const color = event.turbine_id === 1 ? "#235be8" : "#b56b16";
+      const marker = svgNode("rect", { x: x(event.start_hour), y: y(0) + (event.turbine_id === 1 ? 33 : 38), width: Math.max(4, x(Math.min(state.horizon, event.end_hour + 1)) - x(event.start_hour)), height: 3, rx: 1.5, fill: color, opacity: .7 });
+      marker.append(svgNode("title", {}, `Т${event.turbine_id}: ${event.title}. ${event.detail}`));
+      chart.append(marker);
     });
     const hoverLine = svgNode("line", { x1: 0, x2: 0, y1: padding.top, y2: y(0), stroke: labelColor, opacity: .55, "stroke-dasharray": "3 4", "pointer-events": "none" });
     chart.append(hoverLine);
@@ -451,6 +479,315 @@
     chart.removeAttribute("hidden");
     tooltip.hidden = true;
     inspectHour(state.hour);
+  }
+
+  function fillSelect(id, values, label, preferred) {
+    $(id).replaceChildren(...values.map((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label(value);
+      return option;
+    }));
+    if (values.includes(preferred)) $(id).value = preferred;
+  }
+
+  function visibleForecastEvents() {
+    return (state.horizon === 24 ? state.forecast?.events_24h || [] : state.forecast?.events || []).filter((event) => event.end_hour < state.horizon && (state.turbine === "both" || Number(state.turbine) === event.turbine_id));
+  }
+
+  function renderForecastEvents() {
+    const events = visibleForecastEvents();
+    $("forecast-events").replaceChildren(...events.map((event) => {
+      const button = document.createElement("button");
+      button.className = "forecast-event";
+      button.dataset.eventId = event.id;
+      button.dataset.turbine = String(event.turbine_id);
+      button.setAttribute("aria-pressed", "false");
+      const title = document.createElement("strong");
+      title.textContent = `Т${event.turbine_id} · ${event.title}`;
+      const detail = document.createElement("span");
+      detail.textContent = `${dateTime(event.start_time_utc)}${event.start_hour !== event.end_hour ? ` — ${dateTime(event.end_time_utc)}` : ""} · ${event.detail}`;
+      button.append(title, detail);
+      button.addEventListener("click", () => {
+        state.hour = event.kind === "drop" ? event.end_hour : event.start_hour;
+        renderChart();
+        announce(`Турбина ${event.turbine_id}. ${event.title}. ${dateTime(event.start_time_utc)}. ${event.detail}`);
+      });
+      return button;
+    }));
+    if (!events.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-message";
+      empty.textContent = state.forecast ? "Для выбранного периода событий по заданным условиям нет." : "События появятся после загрузки прогноза.";
+      $("forecast-events").append(empty);
+    }
+  }
+
+  function updateQuestionControls() {
+    const ready = !!state.forecast && !!state.status?.openai_configured;
+    $("ask-button").disabled = !ready || state.busy || state.asking;
+    $("question-text").disabled = !ready || state.busy || state.asking;
+    document.querySelectorAll("[data-question]").forEach((button) => { button.disabled = !ready || state.busy || state.asking; });
+    $("ask-button").textContent = state.asking ? "Агент изучает данные…" : "Спросить агента";
+    setText("question-context", !state.status?.openai_configured ? "Для вопросов нужен настроенный API-ключ OpenAI." : state.forecast ? `Выпуск ${state.forecast.issue_date} · обе турбины · 48 ч${state.snapshot ? " · сохранённый расчёт" : ""}` : "Сначала выберите выпуск.");
+  }
+
+  function resetQuestion() {
+    state.questionVersion++;
+    $("answer-panel").hidden = true;
+    $("question-error").hidden = true;
+    setText("question-status", state.asking ? "Предыдущий вопрос ещё обрабатывается. Ответ для другого выпуска не будет показан." : "");
+    updateQuestionControls();
+  }
+
+  async function askQuestion(event) {
+    event.preventDefault();
+    const question = $("question-text").value.trim();
+    if (!question || state.asking || state.busy || !state.forecast || !state.status?.openai_configured) return;
+    const version = ++state.questionVersion;
+    const body = { issue_date: state.forecast.issue_date, question };
+    if (state.forecastJobId) body.job_id = state.forecastJobId;
+    state.asking = true;
+    updateQuestionControls();
+    $("question-error").hidden = true;
+    $("answer-panel").hidden = true;
+    setText("question-status", "Агент получает численные данные через инструменты…");
+    try {
+      const result = await request("/api/ask", { method: "POST", timeoutMs: 390000, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (version !== state.questionVersion) return;
+      setText("answer-text", result.answer);
+      const labels = { get_selected_forecast: "выбранный прогноз", compare_previous_issue: "сравнение выпусков", get_forecast_events: "события прогноза" };
+      setText("answer-sources", `Использованы: ${[...new Set(result.tools || [])].map((tool) => labels[tool] || tool).join(", ")}.`);
+      $("answer-panel").hidden = false;
+      setText("question-status", "Ответ готов. Численные данные получены из инструментов.");
+    } catch (error) {
+      if (version !== state.questionVersion) return;
+      setText("question-error", error.message);
+      $("question-error").hidden = false;
+      setText("question-status", "");
+    } finally {
+      state.asking = false;
+      if (version !== state.questionVersion) setText("question-status", "");
+      updateQuestionControls();
+    }
+  }
+
+  const signed = (value, digits = 3) => `${value > 0 ? "+" : ""}${number(value, digits)}`;
+  function renderStats(id, stats) {
+    $(id).replaceChildren(...stats.map(([label, value]) => {
+      const card = document.createElement("div"); card.className = "analysis-stat";
+      const caption = document.createElement("span"); caption.textContent = label;
+      const amount = document.createElement("strong"); amount.textContent = value;
+      card.append(caption, amount); return card;
+    }));
+  }
+
+  function renderDataTable(id, rows, highlighted = new Set()) {
+    $(id).replaceChildren(...rows.map((values, index) => {
+      const tr = document.createElement("tr");
+      if (highlighted.has(index)) tr.className = "largest-change";
+      values.forEach((value, column) => {
+        const cell = document.createElement(column ? "td" : "th");
+        if (!column) cell.scope = "row";
+        cell.textContent = value;
+        tr.append(cell);
+      });
+      return tr;
+    }));
+  }
+
+  function drawAnalysisChart(id, rows, series, label, highlighted = new Set(), fixedMax = null) {
+    const chart = $(id);
+    chart.replaceChildren(svgNode("title", {}, label), svgNode("desc", {}, "Точные значения доступны в таблице под графиком. Время — UTC+5."));
+    if (!rows.length || chart.closest("[hidden]")) return;
+    const width = Math.max(240, chart.clientWidth), height = chart.clientHeight || 255;
+    const padding = { left: 42, right: 12, top: 20, bottom: 36 };
+    chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    const start = rowTime(rows[0]), end = rowTime(rows.at(-1));
+    const maxY = fixedMax || Math.max(1, Math.ceil(Math.max(...series.flatMap((line) => rows.map((row) => Number(row[line.key]))))));
+    const x = (time) => padding.left + (time - start) / Math.max(HOUR, end - start) * (width - padding.left - padding.right);
+    const y = (value) => height - padding.bottom - value / maxY * (height - padding.top - padding.bottom);
+    for (let index = 0; index <= 4; index++) {
+      const value = maxY * index / 4;
+      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), stroke: "#e1e7f0" }));
+      chart.append(svgNode("text", { x: padding.left - 7, y: y(value) + 3, "text-anchor": "end", fill: "#607087", "font-size": 9, "font-family": "monospace" }, number(value, maxY === 1 ? 2 : 1)));
+    }
+    const ticks = width < 500 ? 3 : 5;
+    for (let index = 0; index <= ticks; index++) {
+      const row = rows[Math.round(index / ticks * (rows.length - 1))];
+      const time = rowTime(row), p = parts(time);
+      chart.append(svgNode("text", { x: x(time), y: height - 11, "text-anchor": index === 0 ? "start" : index === ticks ? "end" : "middle", fill: "#607087", "font-size": 9, "font-family": "monospace" }, `${p.hour}:00`));
+    }
+    series.forEach((line) => {
+      let previous = null;
+      const path = rows.map((row) => {
+        const time = rowTime(row), value = Number(row[line.key]);
+        const command = previous === null || time - previous > HOUR * 1.5 ? "M" : "L";
+        previous = time;
+        return `${command}${x(time).toFixed(2)},${y(value).toFixed(2)}`;
+      }).join(" ");
+      chart.append(svgNode("path", { d: path, fill: "none", stroke: line.color, "stroke-width": 2.4, "stroke-linejoin": "round", ...(line.dashed ? { "stroke-dasharray": "6 4" } : {}) }));
+      rows.forEach((row, index) => {
+        const point = svgNode("circle", { cx: x(rowTime(row)), cy: y(Number(row[line.key])), r: highlighted.has(index) ? 4 : 2, fill: "#fff", stroke: line.color, "stroke-width": highlighted.has(index) ? 2.5 : 1 });
+        point.append(svgNode("title", {}, `${dateTime(rowTime(row))}. ${line.label}: ${number(row[line.key])}`));
+        chart.append(point);
+      });
+    });
+  }
+
+  async function loadComparison() {
+    const issue = $("comparison-issue").value;
+    if (!issue) { setText("comparison-status", "Для сравнения нужны два соседних выпуска с полным прогнозом."); return; }
+    const token = ++analytics.comparisonRequest;
+    analytics.comparison = null;
+    $("comparison-content").hidden = true;
+    $("comparison-status").classList.remove("is-error");
+    setText("comparison-status", "Сопоставляем общие часы двух выпусков…");
+    try {
+      const result = await request(`/api/comparison?issue_date=${encodeURIComponent(issue)}`);
+      if (token !== analytics.comparisonRequest) return;
+      analytics.comparison = result;
+      $("comparison-content").hidden = false;
+      renderComparison();
+    } catch (error) {
+      if (token !== analytics.comparisonRequest) return;
+      $("comparison-status").classList.add("is-error");
+      setText("comparison-status", `${error.message} Выберите другой выпуск или повторно откройте вкладку.`);
+    }
+  }
+
+  function renderComparison() {
+    const data = analytics.comparison;
+    if (!data) return;
+    const turbine = Number($("comparison-turbine").value), metric = $("comparison-metric").value;
+    const rows = data.rows.filter((row) => row.turbine_id === turbine);
+    const deltaKey = `delta_${metric}`, unit = metric === "power" ? "0–1" : "м/с";
+    const ranked = rows.map((row, index) => ({ row, index })).sort((a, b) => Math.abs(b.row[deltaKey]) - Math.abs(a.row[deltaKey]));
+    const top = ranked.slice(0, 3), highlights = new Set(top.map((item) => item.index));
+    setText("comparison-status", `Турбина ${turbine} · общие часы: ${rows.length ? `${dateTime(rows[0].valid_time_utc)} — ${dateTime(rows.at(-1).valid_time_utc)}` : "нет пересечения"}`);
+    renderStats("comparison-metrics", [["Общие часы", String(rows.length)], [`Среднее изменение · ${unit}`, signed(mean(rows, deltaKey))], [`Максимальное |изменение| · ${unit}`, number(Math.abs(ranked[0]?.row[deltaKey] || 0))]]);
+    const sameModel = data.newer.model?.version === data.older.model?.version;
+    setText("comparison-provenance", `Предыдущий выпуск: ${data.older.issue_date} · 23:00. Новый: ${data.newer.issue_date} · 23:00 UTC+5. ${sameModel ? "Версия модели одинакова." : "Версии моделей различаются: изменение включает влияние модели."} Погода: ${data.newer.source?.provider || "NOAA GFS"}.`);
+    $("comparison-provenance").title = `Предыдущая модель: ${data.older.model?.version || "не указана"}. Новая: ${data.newer.model?.version || "не указана"}.`;
+    drawAnalysisChart("comparison-chart", rows, [{ key: `old_${metric}`, label: "Предыдущий", color: "#7e8ca1", dashed: true }, { key: `new_${metric}`, label: "Новый", color: "#235be8" }], `Турбина ${turbine}, ${metric === "power" ? "мощность" : "ветер"}: сравнение выпусков`, highlights, metric === "power" ? 1 : null);
+    $("comparison-changes").replaceChildren(...top.map(({ row }) => {
+      const item = document.createElement("div"); item.className = "revision-item";
+      const time = document.createElement("span"); time.textContent = dateTime(row.valid_time_utc);
+      const value = document.createElement("strong"); value.textContent = `${signed(row[deltaKey])} ${unit}`;
+      const change = document.createElement("span"); change.textContent = `${number(row[`old_${metric}`])} → ${number(row[`new_${metric}`])}`;
+      item.append(time, value, change); return item;
+    }));
+    setText("comparison-table-caption", `Турбина ${turbine} · ${metric === "power" ? "мощность" : "ветер"} · ${unit}. Изменение = новый минус предыдущий.`);
+    renderDataTable("comparison-table", rows.map((row) => [dateTime(row.valid_time_utc), number(row[`old_${metric}`]), number(row[`new_${metric}`]), signed(row[deltaKey])]), highlights);
+    setText("comparison-caveat", data.caveat || "Это пересмотр прогноза, а не оценка улучшения точности: фактических данных февраля нет.");
+  }
+
+  async function loadValidation() {
+    const token = ++analytics.validationRequest;
+    const previousDay = $("validation-day").value;
+    analytics.validation = null;
+    $("validation-content").hidden = true;
+    $("validation-day").disabled = true;
+    $("validation-status").classList.remove("is-error");
+    setText("validation-status", "Сопоставляем прогноз с измерениями января…");
+    try {
+      const data = await request(`/api/validation?turbine_id=${$("validation-turbine").value}&horizon=${$("validation-horizon").value}`);
+      if (token !== analytics.validationRequest) return;
+      analytics.validation = data;
+      fillSelect("validation-day", data.days, (day) => day, previousDay);
+      $("validation-day").disabled = !data.days.length;
+      $("validation-content").hidden = false;
+      renderValidation();
+    } catch (error) {
+      if (token !== analytics.validationRequest) return;
+      $("validation-status").classList.add("is-error");
+      setText("validation-status", `${error.message} Повторно откройте вкладку для загрузки.`);
+    }
+  }
+
+  function renderValidation() {
+    const data = analytics.validation;
+    if (!data) return;
+    const day = $("validation-day").value;
+    const rows = data.rows.filter((row) => row.valid_time_local.slice(0, 10) === day);
+    setText("validation-status", `Показатели за весь январь · турбина ${data.turbine_id} · горизонт ${data.horizon} ч. На графике: ${day || "нет данных"} · почасовых значений: ${rows.length}.`);
+    renderStats("validation-metrics", [["MAE · средняя абсолютная ошибка", number(data.metrics.mae)], ["RMSE · среднеквадратичная ошибка", number(data.metrics.rmse)], ["Проверенных прогнозов", String(data.metrics.count)]]);
+    setText("validation-model", `Модель проверки: ${data.model.label}. Ошибка = прогноз − факт, шкала мощности 0–1. Учитываются только полные часы с пригодными измерениями.`);
+    drawAnalysisChart("validation-chart", rows, [{ key: "actual", label: "Факт", color: "#167465" }, { key: "predicted", label: "Прогноз", color: "#235be8" }], `Турбина ${data.turbine_id}: факт и прогноз ${day}`, new Set(), 1);
+    setText("validation-table-caption", `${day} · турбина ${data.turbine_id} · горизонт ${data.horizon} ч · мощность 0–1`);
+    renderDataTable("validation-table", rows.map((row) => [dateTime(row.valid_time_utc), number(row.actual), number(row.predicted), signed(row.error), number(row.abs_error)]));
+    setText("validation-caveat", data.caveat);
+  }
+
+  async function loadHistory() {
+    const token = ++analytics.historyRequest;
+    setText("history-status", "Загружаем сохранённые расчёты…");
+    $("history-status").classList.remove("is-error");
+    try {
+      const result = await request("/api/jobs");
+      if (token !== analytics.historyRequest) return;
+      const labels = { complete: "Готов", running: "Выполняется", failed: "Ошибка", interrupted: "Прерван" };
+      $("history-list").replaceChildren(...result.jobs.map((job) => {
+        const item = document.createElement("article"); item.className = "history-item";
+        const details = document.createElement("div");
+        const title = document.createElement("strong"); title.textContent = `Выпуск ${job.issue_date} · ${job.mode === "openai" ? "с AI-анализом" : "архивный численный расчёт"}`;
+        const meta = document.createElement("p"); meta.textContent = `Запущен ${dateTime(job.created_at, true, true)}${job.finished_at ? ` · завершён ${dateTime(job.finished_at, true, true)}` : ""}${job.refresh === true ? " · погода обновлялась" : ""}`;
+        details.append(title, meta);
+        if (job.error) { const error = document.createElement("p"); error.textContent = job.error; details.append(error); }
+        const status = document.createElement("span"); status.className = "history-state"; status.dataset.status = job.status; status.textContent = labels[job.status] || job.status;
+        item.append(details, status);
+        if (job.has_result && job.status === "complete") {
+          const open = document.createElement("button"); open.className = "secondary-button"; open.textContent = "Открыть результат"; open.dataset.openJob = job.job_id; open.disabled = state.busy;
+          open.addEventListener("click", () => openSavedJob(job.job_id)); item.append(open);
+        }
+        return item;
+      }));
+      setText("history-status", result.jobs.length ? `Показано расчётов: ${result.jobs.length}. История доступна после перезапуска сервера.` : "Расчётов пока нет. Запустите прогноз — результат появится здесь.");
+    } catch (error) {
+      if (token !== analytics.historyRequest) return;
+      $("history-list").replaceChildren();
+      $("history-status").classList.add("is-error");
+      setText("history-status", error.message);
+    }
+  }
+
+  async function openSavedJob(id) {
+    if (state.busy) return;
+    setBusy(true);
+    ++state.request;
+    try {
+      const job = await request(`/api/jobs/${encodeURIComponent(id)}`);
+      if (job.status !== "complete" || !job.result) throw new Error("У этого расчёта нет сохранённого результата.");
+      await applyForecast(job.result);
+      state.snapshot = job;
+      state.forecastJobId = job.job_id;
+      $("issue-date").value = job.issue_date;
+      resetQuestion();
+      setText("snapshot-label", `Сохранённый расчёт от ${dateTime(job.created_at, true, true)} · выпуск ${job.issue_date}. Показаны исходные данные, версия модели и объяснение.`);
+      $("snapshot-banner").hidden = false;
+      renderEvents(job.events || []);
+      jobStatus("complete", "Открыт сохранённый расчёт");
+      setText("agent-intro", "Результат и журнал восстановлены из истории. OpenAI не вызывался.");
+      setText("explanation-label", job.mode === "openai" ? "Сохранённый AI-анализ" : "Сохранённый результат расчёта");
+      setText("explanation-text", job.explanation || "");
+      $("explanation").hidden = !job.explanation;
+      clearError();
+      $("snapshot-banner").scrollIntoView({ behavior: "auto", block: "start" });
+      announce("Сохранённый расчёт открыт без пересчёта.");
+    } catch (error) { showError(error.message); }
+    finally { setBusy(false); }
+  }
+
+  function switchAnalyticsTab(name) {
+    analytics.tab = name;
+    document.querySelectorAll("[data-tab]").forEach((button) => {
+      const active = button.dataset.tab === name;
+      button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1;
+      $(`panel-${button.dataset.tab}`).hidden = !active;
+    });
+    if (name === "comparison") analytics.comparison ? renderComparison() : loadComparison();
+    else if (name === "validation") analytics.validation ? renderValidation() : loadValidation();
+    else loadHistory();
   }
 
   function jobStatus(status, text) {
@@ -532,16 +869,23 @@
           applyStatus(await request("/api/status"));
           if (job.result) await applyForecast(job.result);
           else await loadForecast();
+          state.snapshot = null;
+          state.forecastJobId = job.job_id;
+          $("snapshot-banner").hidden = true;
+          resetQuestion();
+          analytics.comparison = null;
+          if (analytics.tab === "comparison") loadComparison();
           jobStatus("complete", "Расчёт завершён");
           setText("agent-intro", "Агент OpenAI завершил расчёт и анализ прогноза. Журнал событий — UTC+5.");
           announce("Расчёт завершён. Прогноз обновлён.");
+          if (analytics.tab === "history") loadHistory();
         } catch (error) { showError(error.message, loadForecast); }
         state.job = null;
         setBusy(false);
         return;
       }
-      if (job.status === "failed") {
-        jobStatus("failed", "Ошибка расчёта");
+      if (job.status === "failed" || job.status === "interrupted") {
+        jobStatus("failed", job.status === "interrupted" ? "Расчёт прерван" : "Ошибка расчёта");
         setText("agent-intro", "Расчёт остановлен. Подробности сохранены в журнале инструментов.");
         showError(typeof job.error === "string" ? job.error : job.error?.message || "Не удалось завершить расчёт. Проверьте журнал и повторите запуск.");
         state.job = null;
@@ -638,7 +982,25 @@
   });
   $("run-button").addEventListener("click", runForecast);
   $("retry-button").addEventListener("click", () => state.retry?.());
-  $("download-button").addEventListener("click", () => download(`/api/download?issue_date=${encodeURIComponent($("issue-date").value)}`, `windops_${$("issue-date").value}_48h.csv`, $("download-button")));
+  $("download-button").addEventListener("click", () => download(state.forecastJobId ? `/api/jobs/${encodeURIComponent(state.forecastJobId)}/download` : `/api/download?issue_date=${encodeURIComponent($("issue-date").value)}`, `windops_${state.forecast?.issue_date || $("issue-date").value}_48h.csv`, $("download-button")));
+  $("snapshot-current").addEventListener("click", changeIssue);
+  $("question-form").addEventListener("submit", askQuestion);
+  document.querySelectorAll("[data-question]").forEach((button) => button.addEventListener("click", () => { $("question-text").value = button.dataset.question; $("question-text").focus(); }));
+  document.querySelectorAll("[data-tab]").forEach((button, index, buttons) => {
+    button.addEventListener("click", () => switchAnalyticsTab(button.dataset.tab));
+    button.addEventListener("keydown", (event) => {
+      const next = event.key === "ArrowRight" ? (index + 1) % buttons.length : event.key === "ArrowLeft" ? (index + buttons.length - 1) % buttons.length : event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : null;
+      if (next === null) return;
+      event.preventDefault(); buttons[next].focus(); switchAnalyticsTab(buttons[next].dataset.tab);
+    });
+  });
+  $("comparison-issue").addEventListener("change", loadComparison);
+  $("comparison-turbine").addEventListener("change", renderComparison);
+  $("comparison-metric").addEventListener("change", renderComparison);
+  $("validation-turbine").addEventListener("change", loadValidation);
+  $("validation-horizon").addEventListener("change", loadValidation);
+  $("validation-day").addEventListener("change", renderValidation);
+  $("history-refresh").addEventListener("click", loadHistory);
   $("february-download").addEventListener("click", () => download("/api/download-february", "windops_february_2026_day_ahead.csv", $("february-download")));
   $("table-toggle").addEventListener("click", () => {
     const open = $("hourly-table").hidden;
@@ -654,7 +1016,7 @@
     renderForecast();
   }));
   let resizeTimer;
-  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderChart(), 100); });
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { renderChart(); if (analytics.tab === "comparison") renderComparison(); if (analytics.tab === "validation") renderValidation(); }, 100); });
   const downloadLabel = document.createElement("span");
   downloadLabel.textContent = "CSV · 48 ч · 2 турбины";
   const downloadIcon = $("download-button").querySelector("svg");
