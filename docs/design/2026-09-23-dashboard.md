@@ -4,7 +4,7 @@ User wants both a modern forecasting workspace and richer interaction. The page 
 
 Direction: a compact weather operations desk. Cool white surfaces (#ffffff), blue-grey canvas (#f3f6fb), navy type (#172b45), blue T1 (#235be8), amber T2 (#b56b16), teal status (#167465). Display uses Trebuchet MS with system fallback; body uses system-ui; numeric data uses SFMono/Consolas. No remote font dependencies.
 
-Layout: narrow navy navigation rail; compact page header and date controls; three forecast summaries; large two-series chart beside the live agent stages. Data provenance and exports remain accessible below. On small screens the rail becomes a header and the agent follows the chart.
+Layout: compact brand header with the archive period; full-width forecast workspace without a sidebar or section-jump menu. Three forecast summaries sit above a large two-series chart beside the live agent stages. Data provenance and exports remain accessible below. On small screens the agent follows the chart.
 
 Signature: a two-turbine trajectory with a synchronized hourly inspector. This is real forecast data, not decorative wind art. The 24/48 hour toggle, date arrows and comparison mode alter actual data views. Downloads remain explicitly full 48 hours for both turbines.
 

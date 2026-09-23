@@ -13,25 +13,11 @@
 <body>
   <a class="skip-link" href="#forecast">Перейти к прогнозу</a>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Навигация">
-      <a class="brand" href="/" aria-label="WindOps — главная">
-        <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 20V5M20 20 7 27.5M20 20 33 27.5M20 23v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="20" r="3.3" fill="currentColor"/></svg>
-        <span>WindOps<small>ПРОГНОЗ ВЕТРОЭНЕРГИИ</small></span>
-      </a>
-      <div class="workspace-label"><span class="workspace-mark">W</span><div>Ветровая станция<small>2 турбины · UTC+5</small></div></div>
-      <nav class="main-nav" aria-label="Разделы страницы">
-        <span class="nav-caption">Рабочее пространство</span>
-        <a href="#overview"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="12" y="3" width="5" height="5" rx="1"/><rect x="3" y="12" width="5" height="5" rx="1"/><rect x="12" y="12" width="5" height="5" rx="1"/></svg>Обзор прогноза</a>
-        <a href="#agent"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 2.4 5.6L18 10l-5.6 2.4L10 18l-2.4-5.6L2 10l5.6-2.4Z"/></svg>Работа агента</a>
-        <a href="#data-details"><svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="5" rx="6" ry="2.5"/><path d="M4 5v10c0 3.3 12 3.3 12 0V5M4 10c0 3.3 12 3.3 12 0"/></svg>Данные и модель</a>
-        <a href="#exports"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v10m-4-4 4 4 4-4M3 13v4h14v-4"/></svg>Экспорт прогноза</a>
-      </nav>
-      <div class="sidebar-period"><span class="nav-caption">Период прогнозирования</span><strong>Февраль 2026</strong><p>Воспроизведение ежедневных прогнозов по архиву погоды.</p><span class="archive-badge"><i></i>Архивный режим</span></div>
-      <div class="sidebar-bottom"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 11 4 4 8-10"/></svg><span>Погода проверяется<br>на момент выпуска</span></div>
-    </aside>
-
     <div class="main-shell">
-      <header class="topbar"><div class="breadcrumb">Рабочее пространство <span>/</span> <strong>Прогноз</strong></div><div class="topbar-meta"><span>NOAA GFS</span><span class="timezone">UTC+5</span></div></header>
+      <header class="topbar">
+        <div class="brand"><svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 20V5M20 20 7 27.5M20 20 33 27.5M20 23v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="20" r="3.3" fill="currentColor"/></svg><span>WindOps</span></div>
+        <div class="topbar-meta"><span class="archive-context">Архив · февраль 2026</span><span class="provider-tag">NOAA GFS</span><span class="timezone">UTC+5</span></div>
+      </header>
       <main id="overview">
         <div class="page-heading"><div><p class="eyebrow">Ветровая станция · две турбины</p><h1>Прогноз выработки</h1><p class="page-intro">От погодного прогноза до почасовой мощности.</p></div><div class="coverage" id="coverage"><span class="status-dot pending"></span><span id="coverage-text">Проверяем данные</span></div></div>
 
