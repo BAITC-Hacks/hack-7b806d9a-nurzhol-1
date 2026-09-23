@@ -293,8 +293,12 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self.send_json(job)
             else:
-                files = {'/':('index.html','text/html; charset=utf-8'),
-                         '/index.html':('index.html','text/html; charset=utf-8'),
+                files = {'/':('landing.html','text/html; charset=utf-8'),
+                         '/index.html':('landing.html','text/html; charset=utf-8'),
+                         '/app':('index.html','text/html; charset=utf-8'),
+                         '/app/':('index.html','text/html; charset=utf-8'),
+                         '/landing.js':('landing.js','application/javascript; charset=utf-8'),
+                         '/landing.css':('landing.css','text/css; charset=utf-8'),
                          '/app.js':('app.js','application/javascript; charset=utf-8'),
                          '/style.css':('style.css','text/css; charset=utf-8')}
                 if url.path not in files:

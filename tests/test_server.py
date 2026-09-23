@@ -29,7 +29,15 @@ class LocalHTTPTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory()
         self.root=Path(self.temp.name)
         (self.root/'web').mkdir()
-        (self.root/'web/index.html').write_text('<h1>Forecast</h1>')
+        for name,content in {
+            'landing.html':'<h1>WindOps overview</h1>',
+            'index.html':'<h1>Forecast dashboard</h1>',
+            'landing.css':'body { color: navy; }',
+            'landing.js':'document.body.dataset.page = "landing";',
+            'style.css':'body { color: blue; }',
+            'app.js':'document.body.dataset.page = "dashboard";',
+        }.items():
+            (self.root/'web'/name).write_text(content)
         (self.root/'.env').write_text('OPENAI_API_KEY=secret-never-serve\n')
         self.server=create_server(self.root,port=0,service=HTTPService(self.root))
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True)
@@ -340,9 +348,27 @@ class LocalHTTPTests(unittest.TestCase):
         with patch.object(service, 'get_weather', side_effect=export_replaced_while_checking_weather):
             self.assertEqual(self.request('/api/download-february'), original_csv)
 
+    def test_landing_and_dashboard_have_distinct_routes(self):
+        for path in ('/','/index.html'):
+            with self.subTest(path=path),urlopen(self.url+path,timeout=5) as response:
+                self.assertEqual(response.headers.get_content_type(),'text/html')
+                self.assertEqual(response.read(),b'<h1>WindOps overview</h1>')
+        for path in ('/app','/app/'):
+            with self.subTest(path=path),urlopen(self.url+path,timeout=5) as response:
+                self.assertEqual(response.headers.get_content_type(),'text/html')
+                self.assertEqual(response.read(),b'<h1>Forecast dashboard</h1>')
+
+    def test_landing_and_dashboard_assets_have_explicit_routes_and_mime_types(self):
+        for name,mime in (('landing.css','text/css'),('landing.js','application/javascript'),
+                          ('style.css','text/css'),('app.js','application/javascript')):
+            with self.subTest(name=name),urlopen(self.url+'/'+name,timeout=5) as response:
+                self.assertEqual(response.headers.get_content_type(),mime)
+                self.assertEqual(response.read(),(self.root/'web'/name).read_bytes())
+
     def test_static_server_cannot_serve_dotenv_or_parent_paths(self):
-        self.assertIn(b'Forecast',self.request('/'))
-        for path in ('/.env','/../.env','/%2e%2e/.env','/api/jobs/../../.env'):
+        (self.root/'web/private.txt').write_text('not a public asset')
+        for path in ('/.env','/../.env','/%2e%2e/.env','/api/jobs/../../.env',
+                     '/private.txt','/web/index.html','/app/index.html','/app/style.css'):
             with self.subTest(path=path),self.assertRaises(HTTPError) as caught:
                 self.request(path)
             self.assertEqual(caught.exception.code,404)
