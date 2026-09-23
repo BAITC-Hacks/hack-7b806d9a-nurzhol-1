@@ -32,6 +32,13 @@
         <div class="alert" id="error-banner" role="alert" hidden><span id="error-message"></span><button id="retry-button" class="text-button">Повторить загрузку</button></div>
         <div class="snapshot-banner" id="snapshot-banner" hidden><span id="snapshot-label"></span><button class="text-button" id="snapshot-current">Вернуться к текущему прогнозу</button></div>
 
+        <div class="workspace-grid">
+          <section class="question-panel panel" aria-labelledby="question-title">
+            <div class="question-heading"><p class="eyebrow">AI-помощник</p><h2 id="question-title">Спросить о прогнозе</h2></div>
+            <form class="question-form" id="question-form"><p id="question-context" class="question-context">Сначала выберите выпуск.</p><div class="question-suggestions"><button type="button" data-question="Когда ожидается минимальная мощность у каждой турбины?">Когда минимум?</button><button type="button" data-question="Чем отличаются прогнозы двух турбин?">Сравнить турбины</button><button type="button" data-question="Что изменилось по сравнению с предыдущим выпуском на общие часы?">Что изменилось?</button></div><label for="question-text">Ваш вопрос</label><textarea id="question-text" rows="2" aria-describedby="question-context" maxlength="1000" placeholder="Например, в какие часы ожидается падение мощности?" required></textarea><button id="ask-button" class="primary-button" disabled>Спросить агента</button><p id="question-status" class="question-context" role="status"></p><p id="question-error" class="inline-error" role="alert" hidden></p></form>
+            <div id="answer-panel" class="answer-panel" hidden><p class="micro-label">Ответ по выбранному прогнозу</p><p id="answer-text" tabindex="0"></p><p id="answer-sources" class="question-context"></p></div>
+          </section>
+
         <section class="forecast-overview" aria-label="Сводка выбранного прогноза">
           <div class="overview-caption"><span id="kpi-context">Обе турбины · 48 часов</span><span>Мощность в шкале 0–1</span></div>
           <div class="kpi-grid">
@@ -41,7 +48,6 @@
           </div>
         </section>
 
-        <div class="workspace-grid">
           <section class="forecast-panel panel" id="forecast" aria-labelledby="forecast-title" aria-busy="true">
             <div class="forecast-header"><div><h2 id="forecast-title">Траектория мощности</h2><p class="forecast-range mono" id="forecast-range">Загрузка прогноза…</p></div><div class="segmented horizon-selector" role="group" aria-label="Горизонт прогноза"><button data-horizon="24" aria-pressed="false">24 ч</button><button data-horizon="48" class="is-active" aria-pressed="true">48 ч</button></div></div>
             <div class="chart-controls"><div class="segmented turbine-selector" role="group" aria-label="Турбина"><button data-turbine="both" class="is-active" aria-pressed="true">Обе турбины</button><button data-turbine="1" aria-pressed="false">Турбина 1</button><button data-turbine="2" aria-pressed="false">Турбина 2</button></div><div class="metric-selector" role="group" aria-label="Показатель графика"><button class="is-active" data-metric="power" aria-pressed="true">Мощность</button><button data-metric="wind" aria-pressed="false">Ветер</button></div></div>
@@ -61,8 +67,6 @@
               <li data-step="analyze_forecast" data-state="pending"><span class="step-marker" aria-hidden="true">4</span><div><div class="step-heading"><h3>Анализ результата</h3><span class="step-state">Ожидает</span></div><p class="step-detail">Диапазоны и изменения мощности</p></div></li>
             </ol>
             <div class="explanation" id="explanation" hidden><p class="micro-label" id="explanation-label">Комментарий к прогнозу</p><p id="explanation-text" tabindex="0" aria-label="Анализ прогноза"></p></div>
-            <form class="question-form" id="question-form"><h3>Спросить о прогнозе</h3><p id="question-context" class="question-context">Сначала выберите выпуск.</p><div class="question-suggestions"><button type="button" data-question="Когда ожидается минимальная мощность у каждой турбины?">Когда минимум?</button><button type="button" data-question="Чем отличаются прогнозы двух турбин?">Сравнить турбины</button><button type="button" data-question="Что изменилось по сравнению с предыдущим выпуском на общие часы?">Что изменилось?</button></div><label for="question-text">Ваш вопрос</label><textarea id="question-text" rows="3" maxlength="1000" placeholder="Например, в какие часы ожидается падение мощности?" required></textarea><button id="ask-button" class="secondary-button" disabled>Спросить агента</button><p id="question-status" class="question-context" role="status"></p><p id="question-error" class="inline-error" role="alert" hidden></p></form>
-            <div id="answer-panel" class="answer-panel" hidden><p class="micro-label">Ответ по выбранному прогнозу</p><p id="answer-text" tabindex="0"></p><p id="answer-sources" class="question-context"></p></div>
             <details class="technical-log"><summary>Журнал инструментов <span aria-hidden="true">⌄</span></summary><ol class="event-list" id="event-list"></ol><p class="log-note">Здесь появятся события текущего расчёта. Время — UTC+5.</p></details>
           </section>
         </div>
