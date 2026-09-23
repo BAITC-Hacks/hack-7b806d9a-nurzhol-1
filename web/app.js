@@ -501,7 +501,10 @@
 
   function renderForecastEvents() {
     const events = visibleForecastEvents();
-    $("forecast-events").replaceChildren(...events.map((event) => {
+    const container = $("forecast-events");
+    container.replaceChildren();
+    container.classList.toggle("single-turbine", state.turbine !== "both");
+    const buttons = events.map((event) => {
       const button = document.createElement("button");
       button.className = "forecast-event";
       button.dataset.eventId = event.id;
@@ -518,13 +521,33 @@
         announce(`Турбина ${event.turbine_id}. ${event.title}. ${dateTime(event.start_time_utc)}. ${event.detail}`);
       });
       return button;
-    }));
+    });
     if (!events.length) {
       const empty = document.createElement("p");
       empty.className = "empty-message";
       empty.textContent = state.forecast ? "Для выбранного периода событий по заданным условиям нет." : "События появятся после загрузки прогноза.";
-      $("forecast-events").append(empty);
+      container.append(empty);
+      return;
     }
+    const turbines = state.turbine === "both" ? [1, 2] : [Number(state.turbine)];
+    turbines.forEach((turbine) => {
+      const group = document.createElement("section");
+      group.className = "event-turbine";
+      group.dataset.turbineGroup = String(turbine);
+      const heading = document.createElement("h4");
+      heading.id = `events-turbine-${turbine}-title`;
+      heading.textContent = `Турбина ${turbine}`;
+      group.setAttribute("aria-labelledby", heading.id);
+      const cards = buttons.filter((button) => Number(button.dataset.turbine) === turbine);
+      group.append(heading, ...cards);
+      if (!cards.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty-message";
+        empty.textContent = "Для этой турбины событий по заданным условиям нет.";
+        group.append(empty);
+      }
+      container.append(group);
+    });
   }
 
   function updateQuestionControls() {
