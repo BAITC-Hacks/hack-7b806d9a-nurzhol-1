@@ -362,10 +362,10 @@
     const width = Math.max(240, container.clientWidth);
     const height = Math.max(220, container.clientHeight);
     const compact = width < 650;
-    const padding = { left: compact ? 35 : 46, right: compact ? 13 : 24, top: 35, bottom: 45 };
+    const power = state.metric === "power";
+    const padding = { left: compact ? 40 : 48, right: 16, top: 56, bottom: power ? 72 : 40 };
     const plotWidth = width - padding.left - padding.right;
     const plotHeight = height - padding.top - padding.bottom;
-    const power = state.metric === "power";
     const key = power ? "power_normalized" : "wind_speed_ms";
     const values = series.flatMap((item) => item.rows.map((row) => Number(row[key]))).filter(Number.isFinite);
     const maxY = power ? 1 : Math.max(4, Math.ceil(Math.max(...values) / 4) * 4);
@@ -381,37 +381,43 @@
     const title = `${state.turbine === "both" ? "Турбины 1 и 2" : `Турбина ${state.turbine}`}: ${power ? "нормированная мощность" : "скорость ветра"}, ${state.horizon} часов`;
     chart.append(svgNode("title", { id: "chart-title" }, title));
     chart.append(svgNode("desc", { id: "chart-description" }, `${series.map((item) => item.turbine === 1 ? "Синяя сплошная линия — турбина 1" : "Оранжевая пунктирная линия — турбина 2").join(". ")}. Значения турбин показаны отдельно. Выберите час на графике или откройте таблицу почасовых значений.`));
+    chart.append(svgNode("text", { x: padding.left, y: 16, class: "chart-caption" }, power ? "Мощность · 0–1" : "Ветер · м/с"));
+    chart.append(svgNode("text", { x: width - padding.right, y: 16, "text-anchor": "end", class: "chart-caption" }, "UTC+5"));
     if (state.horizon === 48) chart.append(svgNode("rect", { x: x(24), y: padding.top, width: plotWidth / 2, height: plotHeight, fill: dayFill }));
+    const selectedBand = svgNode("rect", { x: x(0), y: padding.top, width: plotWidth / state.horizon, height: plotHeight, class: "chart-selected-band", "pointer-events": "none" });
+    chart.append(selectedBand);
     for (let step = 0; step <= 4; step++) {
       const value = maxY / 4 * step;
-      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), stroke: gridColor, "stroke-width": 1 }));
-      chart.append(svgNode("text", { x: padding.left - 9, y: y(value) + 3, "text-anchor": "end", fill: labelColor, "font-size": compact ? 9 : 10, "font-family": "monospace" }, number(value, power ? 2 : 0)));
+      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), stroke: gridColor, "stroke-width": 1, ...(step === 0 ? { class: "chart-baseline" } : {}) }));
+      chart.append(svgNode("text", { x: padding.left - 8, y: y(value) + 4, "text-anchor": "end", class: "chart-tick" }, number(value, power ? 2 : 0)));
     }
     const tickStep = state.horizon / (compact ? 4 : 8);
     for (let hour = 0; hour <= state.horizon; hour += tickStep) {
       const p = parts(time0 + hour * HOUR);
-      chart.append(svgNode("line", { x1: x(hour), x2: x(hour), y1: y(0), y2: y(0) + 5, stroke: gridColor, "stroke-width": 1 }));
-      chart.append(svgNode("text", { x: x(hour), y: y(0) + 21, "text-anchor": hour === 0 ? "start" : hour === state.horizon ? "end" : "middle", fill: labelColor, "font-size": compact ? 9 : 10, "font-family": "monospace" }, `${p.hour}:00`));
+      chart.append(svgNode("line", { x1: x(hour), x2: x(hour), y1: y(0), y2: y(0) + 4, stroke: gridColor, "stroke-width": 1 }));
+      chart.append(svgNode("text", { x: x(hour), y: y(0) + 24, "text-anchor": hour === 0 ? "start" : hour === state.horizon ? "end" : "middle", class: "chart-tick" }, `${p.hour}:00`));
     }
     if (state.horizon === 48) chart.append(svgNode("line", { x1: x(24), x2: x(24), y1: padding.top, y2: y(0), stroke: labelColor, opacity: .45, "stroke-width": 1, "stroke-dasharray": "3 4" }));
     (state.horizon === 48 ? [0, 24] : [0]).forEach((hour, index) => {
       const p = parts(time0 + hour * HOUR);
-      const label = compact ? `${p.day}.${p.month} / ${index + 1}-й день` : `${p.day}.${p.month}.${p.year} / ${index + 1}-й день`;
-      chart.append(svgNode("text", { x: x(hour) + 4, y: 16, fill: labelColor, "font-size": compact ? 9 : 10, "font-family": "monospace" }, label));
+      const label = compact ? `${p.day}.${p.month}` : `${p.day}.${p.month}.${p.year} · ${index + 1}-й день`;
+      chart.append(svgNode("text", { x: x(hour) + 4, y: 40, class: "chart-tick" }, label));
     });
     series.forEach((item) => {
       const points = item.rows.map((row) => [x((rowTime(row) - time0) / HOUR + .5), y(Number(row[key]))]).filter((point) => point.every(Number.isFinite));
       const path = points.map((point, index) => `${index ? "L" : "M"}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(" ");
       if (!points.length) return;
-      if (series.length === 1) chart.append(svgNode("path", { d: `${path} L${points.at(-1)[0]},${y(0)} L${points[0][0]},${y(0)} Z`, fill: item.color, opacity: .06 }));
-      chart.append(svgNode("path", { d: path, fill: "none", stroke: item.color, "stroke-width": compact ? 2.1 : 2.5, "stroke-linejoin": "round", "stroke-linecap": "round", ...(item.turbine === 2 ? { "stroke-dasharray": "6 3" } : {}) }));
-      if (!compact) points.forEach(([cx, cy]) => chart.append(svgNode("circle", { cx, cy, r: 1.7, fill: "#fff", stroke: item.color, "stroke-width": 1.2 })));
+      chart.append(svgNode("path", { d: path, fill: "none", stroke: item.color, "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round", ...(item.turbine === 2 ? { "stroke-dasharray": "6 4" } : {}) }));
     });
-    visibleForecastEvents().forEach((event) => {
-      const color = event.turbine_id === 1 ? "#235be8" : "#b56b16";
-      const marker = svgNode("rect", { x: x(event.start_hour), y: y(0) + (event.turbine_id === 1 ? 33 : 38), width: Math.max(4, x(Math.min(state.horizon, event.end_hour + 1)) - x(event.start_hour)), height: 3, rx: 1.5, fill: color, opacity: .7 });
-      marker.append(svgNode("title", {}, `Т${event.turbine_id}: ${event.title}. ${event.detail}`));
-      chart.append(marker);
+    if (power) series.forEach((item, index) => {
+      const laneY = y(0) + 44 + index * 12;
+      chart.append(svgNode("text", { x: padding.left - 8, y: laneY + 4, "text-anchor": "end", class: "chart-tick" }, `Т${item.turbine}`));
+      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: laneY, y2: laneY, stroke: gridColor }));
+      visibleForecastEvents().filter((event) => event.turbine_id === item.turbine).forEach((event) => {
+        const marker = svgNode("rect", { x: x(event.start_hour), y: laneY - 2, width: Math.max(4, x(Math.min(state.horizon, event.end_hour + 1)) - x(event.start_hour)), height: 4, rx: 2, fill: item.color });
+        marker.append(svgNode("title", {}, `Т${event.turbine_id}: ${event.title}. ${event.detail}`));
+        chart.append(marker);
+      });
     });
     const hoverLine = svgNode("line", { x1: 0, x2: 0, y1: padding.top, y2: y(0), stroke: labelColor, opacity: .55, "stroke-dasharray": "3 4", "pointer-events": "none" });
     chart.append(hoverLine);
@@ -425,6 +431,7 @@
       const position = x((time - time0) / HOUR + .5);
       hoverLine.setAttribute("x1", position);
       hoverLine.setAttribute("x2", position);
+      selectedBand.setAttribute("x", x((time - time0) / HOUR));
       series.forEach((item, index) => {
         const row = item.rows.find((entry) => rowTime(entry) === time);
         markers[index].setAttribute("cx", position);
@@ -454,7 +461,7 @@
       });
       tooltip.hidden = false;
       tooltip.style.left = `${Math.min(container.clientWidth - tooltip.offsetWidth - 6, Math.max(5, mouseX / width * container.clientWidth + 12))}px`;
-      tooltip.style.top = "27px";
+      tooltip.style.top = "48px";
     });
     interaction.addEventListener("click", choosePointerHour);
     interaction.addEventListener("pointerleave", () => { tooltip.hidden = true; });
@@ -466,15 +473,12 @@
       swatch.className = "legend-swatch";
       swatch.style.color = item.color;
       swatch.style.borderTop = `3px ${item.turbine === 2 ? "dashed" : "solid"} ${item.color}`;
-      swatch.style.width = "20px";
-      swatch.style.display = "inline-block";
       swatch.setAttribute("aria-hidden", "true");
       label.append(swatch, document.createTextNode(`Турбина ${item.turbine}`));
       return label;
     });
     $("chart-legend").replaceChildren(...legend);
-    $("series-swatch").style.background = series.length === 1 ? series[0].color : "#657089";
-    setText("series-label", power ? "Мощность каждой турбины · 0–1" : "Скорость ветра · м/с");
+    setText("series-label", power ? "Полосы под осью — события мощности" : "Почасовые значения скорости ветра");
     $("chart-placeholder").hidden = true;
     chart.removeAttribute("hidden");
     tooltip.hidden = true;
@@ -598,25 +602,29 @@
 
   function drawAnalysisChart(id, rows, series, label, highlighted = new Set(), fixedMax = null) {
     const chart = $(id);
-    chart.replaceChildren(svgNode("title", {}, label), svgNode("desc", {}, "Точные значения доступны в таблице под графиком. Время — UTC+5."));
+    chart.setAttribute("aria-labelledby", `${id}-title ${id}-description`);
+    chart.removeAttribute("aria-label");
+    chart.replaceChildren(svgNode("title", { id: `${id}-title` }, label), svgNode("desc", { id: `${id}-description` }, "Точные значения доступны в таблице под графиком. Время — UTC+5."));
     if (!rows.length || chart.closest("[hidden]")) return;
     const width = Math.max(240, chart.clientWidth), height = chart.clientHeight || 255;
-    const padding = { left: 42, right: 12, top: 20, bottom: 36 };
+    const padding = { left: 48, right: 16, top: 36, bottom: 40 };
     chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
     const start = rowTime(rows[0]), end = rowTime(rows.at(-1));
     const maxY = fixedMax || Math.max(1, Math.ceil(Math.max(...series.flatMap((line) => rows.map((row) => Number(row[line.key]))))));
     const x = (time) => padding.left + (time - start) / Math.max(HOUR, end - start) * (width - padding.left - padding.right);
     const y = (value) => height - padding.bottom - value / maxY * (height - padding.top - padding.bottom);
+    chart.append(svgNode("text", { x: padding.left, y: 16, class: "chart-caption" }, fixedMax === 1 ? "Мощность · 0–1" : "Ветер · м/с"));
+    chart.append(svgNode("text", { x: width - padding.right, y: 16, "text-anchor": "end", class: "chart-caption" }, "UTC+5"));
     for (let index = 0; index <= 4; index++) {
       const value = maxY * index / 4;
-      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), stroke: "#e1e7f0" }));
-      chart.append(svgNode("text", { x: padding.left - 7, y: y(value) + 3, "text-anchor": "end", fill: "#607087", "font-size": 9, "font-family": "monospace" }, number(value, maxY === 1 ? 2 : 1)));
+      chart.append(svgNode("line", { x1: padding.left, x2: width - padding.right, y1: y(value), y2: y(value), class: index === 0 ? "chart-baseline" : "chart-gridline" }));
+      chart.append(svgNode("text", { x: padding.left - 8, y: y(value) + 4, "text-anchor": "end", class: "chart-tick" }, number(value, maxY === 1 ? 2 : 1)));
     }
     const ticks = width < 500 ? 3 : 5;
     for (let index = 0; index <= ticks; index++) {
       const row = rows[Math.round(index / ticks * (rows.length - 1))];
       const time = rowTime(row), p = parts(time);
-      chart.append(svgNode("text", { x: x(time), y: height - 11, "text-anchor": index === 0 ? "start" : index === ticks ? "end" : "middle", fill: "#607087", "font-size": 9, "font-family": "monospace" }, `${p.hour}:00`));
+      chart.append(svgNode("text", { x: x(time), y: height - 16, "text-anchor": index === 0 ? "start" : index === ticks ? "end" : "middle", class: "chart-tick" }, `${p.hour}:00`));
     }
     series.forEach((line) => {
       let previous = null;
@@ -628,7 +636,9 @@
       }).join(" ");
       chart.append(svgNode("path", { d: path, fill: "none", stroke: line.color, "stroke-width": 2.4, "stroke-linejoin": "round", ...(line.dashed ? { "stroke-dasharray": "6 4" } : {}) }));
       rows.forEach((row, index) => {
-        const point = svgNode("circle", { cx: x(rowTime(row)), cy: y(Number(row[line.key])), r: highlighted.has(index) ? 4 : 2, fill: "#fff", stroke: line.color, "stroke-width": highlighted.has(index) ? 2.5 : 1 });
+        const isolated = (!rows[index - 1] || rowTime(row) - rowTime(rows[index - 1]) > HOUR * 1.5) && (!rows[index + 1] || rowTime(rows[index + 1]) - rowTime(row) > HOUR * 1.5);
+        if (!highlighted.has(index) && !isolated) return;
+        const point = svgNode("circle", { cx: x(rowTime(row)), cy: y(Number(row[line.key])), r: highlighted.has(index) ? 4 : 2.5, fill: "#fff", stroke: line.color, "stroke-width": 2 });
         point.append(svgNode("title", {}, `${dateTime(rowTime(row))}. ${line.label}: ${number(row[line.key])}`));
         chart.append(point);
       });
