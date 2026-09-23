@@ -106,10 +106,8 @@ select {appearance:none;width:100%;height:40px;border:1px solid #d9e0eb;border-r
 .loading-spinner {width:16px;height:16px;border:2px solid #dbe4fa;border-top-color:var(--blue);border-radius:50%;animation:rotate .8s linear infinite;flex:none}
 .chart-tooltip {position:absolute;z-index:5;pointer-events:none;background:var(--navy);color:#fff;padding:9px 12px;border-radius:7px;font:9px/1.8 var(--mono);box-shadow:0 5px 18px #142d4e21;white-space:nowrap;max-width:100%}
 .hour-inspector {border:1px solid #e4eaf4;background:#f8faff;border-radius:9px;margin:0 22px 16px;padding:12px 14px}
-.inspector-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:9px;color:var(--muted)}
+.inspector-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;font-size:9px;color:var(--muted)}
 .inspector-heading strong {font-size:9px;font-weight:500;color:var(--ink)}
-#hour-slider {display:block;width:100%;height:20px;margin:6px 0;accent-color:var(--blue);cursor:ew-resize}
-#hour-slider:disabled {opacity:.4;cursor:not-allowed}
 .inspector-values {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .inspector-values>div {min-width:0}
 .inspector-values>div+div {padding-left:12px;border-left:1px solid #e1e8f4}

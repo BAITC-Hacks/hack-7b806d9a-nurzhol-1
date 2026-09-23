@@ -10,4 +10,4 @@ Signature: a two-turbine trajectory with a synchronized hourly inspector. This i
 
 Quiet surrounding chrome; no decorative KPI metrics, pretend notifications or fabricated agent activity. Preserve all current model, time, source verification and error handling. The prepared model remains unchanged.
 
-Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, keyboard hourly slider, actual deterministic run, table and exports, console errors, existing relevant tests.
+Verification: browser desktop and mobile, both turbine modes and horizons, date boundary arrows, hourly values selected on the chart, keyboard-accessible table, actual deterministic run, table and exports, console errors, existing relevant tests.

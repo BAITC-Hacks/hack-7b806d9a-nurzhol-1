@@ -125,7 +125,6 @@
     $("hourly-table-body").replaceChildren();
     ["kpi-power", "kpi-peak", "kpi-wind", "inspector-time", "inspector-power", "inspector-wind", "inspector-temperature"].forEach((id) => setText(id, "—"));
     setText("kpi-context", "Выберите выпуск для просмотра прогноза");
-    $("hour-slider").disabled = true;
     state.hour = 0;
   }
 
@@ -332,23 +331,12 @@
     const rows = series[0]?.rows || [];
     if (!rows.length) return;
     state.hour = Math.max(0, Math.min(rows.length - 1, Math.round(Number(hour) || 0)));
-    const slider = $("hour-slider");
-    slider.min = "0";
-    slider.max = String(rows.length - 1);
-    slider.step = "1";
-    slider.value = String(state.hour);
-    slider.disabled = false;
     const time = rowTime(rows[state.hour]);
-    const values = (key, digits) => series.map((item) => {
-      const row = item.rows.find((entry) => rowTime(entry) === time);
-      return `${state.turbine === "both" ? `Т${item.turbine} ` : ""}${number(row?.[key], digits)}`;
-    }).join(" / ");
     setText("inspector-time", dateTime(time, true, true));
     const valueAtHour = (item, key) => item.rows.find((entry) => rowTime(entry) === time)?.[key];
     renderTurbineValues("inspector-power", series, (item) => valueAtHour(item, "power_normalized"), 3);
     renderTurbineValues("inspector-wind", series, (item) => valueAtHour(item, "wind_speed_ms"), 2);
     renderTurbineValues("inspector-temperature", series, (item) => valueAtHour(item, "temperature_c"), 1);
-    slider.setAttribute("aria-valuetext", `${dateTime(time, true, true)}. Мощность: ${values("power_normalized", 3)}. Ветер: ${values("wind_speed_ms", 2)} м/с.`);
     updateCrosshair();
   }
 
@@ -380,7 +368,7 @@
     chart.replaceChildren();
     const title = `${state.turbine === "both" ? "Турбины 1 и 2" : `Турбина ${state.turbine}`}: ${power ? "нормированная мощность" : "скорость ветра"}, ${state.horizon} часов`;
     chart.append(svgNode("title", { id: "chart-title" }, title));
-    chart.append(svgNode("desc", { id: "chart-description" }, `${series.map((item) => item.turbine === 1 ? "Синяя сплошная линия — турбина 1" : "Оранжевая пунктирная линия — турбина 2").join(". ")}. Значения турбин показаны отдельно. Выберите час ползунком под графиком или откройте таблицу.`));
+    chart.append(svgNode("desc", { id: "chart-description" }, `${series.map((item) => item.turbine === 1 ? "Синяя сплошная линия — турбина 1" : "Оранжевая пунктирная линия — турбина 2").join(". ")}. Значения турбин показаны отдельно. Выберите час на графике или откройте таблицу почасовых значений.`));
     if (state.horizon === 48) chart.append(svgNode("rect", { x: x(24), y: padding.top, width: plotWidth / 2, height: plotHeight, fill: dayFill }));
     for (let step = 0; step <= 4; step++) {
       const value = maxY / 4 * step;
@@ -677,8 +665,6 @@
     state.hour = Math.min(state.hour, state.horizon - 1);
     renderForecast();
   }));
-  $("hour-slider").addEventListener("input", (event) => inspectHour(event.target.value));
-  $("hour-slider").addEventListener("change", (event) => inspectHour(event.target.value));
   let resizeTimer;
   window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderChart(), 100); });
   const downloadLabel = document.createElement("span");
@@ -686,7 +672,6 @@
   const downloadIcon = $("download-button").querySelector("svg");
   $("download-button").replaceChildren(...(downloadIcon ? [downloadIcon, downloadLabel] : [downloadLabel]));
   $("download-button").title = "Полный прогноз на 48 часов для обеих турбин, независимо от выбранного вида графика";
-  $("hour-slider").disabled = true;
   updateIssueNavigation();
   renderEvents();
   renderForecast();
